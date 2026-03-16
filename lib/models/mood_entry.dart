@@ -5,6 +5,7 @@ class MoodEntry {
   final String? journalEntry;
   final List<String> tags;
   final DateTime createdAt;
+  final DateTime updatedAt;
   final bool isSynced;
 
   MoodEntry({
@@ -14,8 +15,9 @@ class MoodEntry {
     this.journalEntry,
     required this.tags,
     required this.createdAt,
+    DateTime? updatedAt,
     this.isSynced = false,
-  });
+  }) : updatedAt = updatedAt ?? createdAt;
 
   static const Map<int, String> moodEmojis = {
     1: '😢',
@@ -44,11 +46,13 @@ class MoodEntry {
       'journal_entry': journalEntry,
       'tags': tags.join(','),
       'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
       'is_synced': isSynced ? 1 : 0,
     };
   }
 
   factory MoodEntry.fromMap(Map<String, dynamic> map) {
+    final createdAt = DateTime.parse(map['created_at'] as String);
     return MoodEntry(
       id: map['id'] as String,
       moodLevel: map['mood_level'] as int,
@@ -57,7 +61,10 @@ class MoodEntry {
       tags: (map['tags'] as String?)?.isNotEmpty == true
           ? (map['tags'] as String).split(',')
           : [],
-      createdAt: DateTime.parse(map['created_at'] as String),
+      createdAt: createdAt,
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'] as String)
+          : createdAt,
       isSynced: (map['is_synced'] as int?) == 1,
     );
   }
@@ -70,13 +77,17 @@ class MoodEntry {
     } else if (tagsData is String && tagsData.isNotEmpty) {
       parsedTags = tagsData.split(',');
     }
+    final createdAt = DateTime.parse(map['created_at'] as String);
     return MoodEntry(
       id: map['id'] as String,
       moodLevel: map['mood_level'] as int,
       note: map['note'] as String?,
       journalEntry: map['journal_entry'] as String?,
       tags: parsedTags,
-      createdAt: DateTime.parse(map['created_at'] as String),
+      createdAt: createdAt,
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'] as String)
+          : createdAt,
       isSynced: true,
     );
   }
@@ -90,6 +101,7 @@ class MoodEntry {
       'journal_entry': journalEntry,
       'tags': tags,
       'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
     };
   }
 
@@ -100,6 +112,7 @@ class MoodEntry {
     String? journalEntry,
     List<String>? tags,
     DateTime? createdAt,
+    DateTime? updatedAt,
     bool? isSynced,
   }) {
     return MoodEntry(
@@ -109,6 +122,7 @@ class MoodEntry {
       journalEntry: journalEntry ?? this.journalEntry,
       tags: tags ?? this.tags,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
     );
   }

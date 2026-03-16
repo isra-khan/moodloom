@@ -34,6 +34,7 @@ class SyncService {
 
   Future<void> syncAll() async {
     if (_isSyncing || !_isOnline || !SupabaseService.isInitialized) return;
+    if (SupabaseService.client?.auth.currentUser == null) return;
     _isSyncing = true;
 
     try {
@@ -43,14 +44,23 @@ class SyncService {
           ? DateTime.fromMillisecondsSinceEpoch(lastSyncMs)
           : null;
 
-      // Push unsynced entries
+      // 1. Push unsynced entries (new + updated)
       final unsynced = await _db.getUnsyncedEntries();
       await SupabaseService.pushEntries(unsynced);
       for (final entry in unsynced) {
         await _db.markAsSynced(entry.id);
       }
 
-      // Pull remote entries
+      // 2. Sync pending deletes to Supabase
+      final pendingDeletes = await _db.getPendingDeletes();
+      if (pendingDeletes.isNotEmpty) {
+        await SupabaseService.deleteEntries(pendingDeletes);
+        for (final id in pendingDeletes) {
+          await _db.clearPendingDelete(id);
+        }
+      }
+
+      // 3. Pull remote entries (uses updated_at for changes since last sync)
       final remote = await SupabaseService.pullEntries(lastSync);
       for (final entry in remote) {
         await _db.insertMoodEntry(entry.copyWith(isSynced: true));

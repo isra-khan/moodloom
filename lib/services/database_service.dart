@@ -16,7 +16,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE mood_entries(
@@ -26,6 +26,7 @@ class DatabaseService {
             journal_entry TEXT,
             tags TEXT,
             created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
             is_synced INTEGER DEFAULT 0
           )
         ''');
@@ -35,6 +36,30 @@ class DatabaseService {
             name TEXT UNIQUE NOT NULL
           )
         ''');
+        await db.execute('''
+          CREATE TABLE pending_deletes(
+            id TEXT PRIMARY KEY,
+            deleted_at TEXT NOT NULL
+          )
+        ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          // Add updated_at column with default = created_at
+          await db.execute(
+            "ALTER TABLE mood_entries ADD COLUMN updated_at TEXT",
+          );
+          await db.execute(
+            "UPDATE mood_entries SET updated_at = created_at WHERE updated_at IS NULL",
+          );
+          // Create pending_deletes table
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS pending_deletes(
+              id TEXT PRIMARY KEY,
+              deleted_at TEXT NOT NULL
+            )
+          ''');
+        }
       },
     );
   }
@@ -61,6 +86,33 @@ class DatabaseService {
   Future<void> deleteMoodEntry(String id) async {
     final db = await database;
     await db.delete('mood_entries', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Delete locally and queue for remote deletion on next sync
+  Future<void> deleteMoodEntryAndTrack(String id) async {
+    final db = await database;
+    await db.delete('mood_entries', where: 'id = ?', whereArgs: [id]);
+    await db.insert(
+      'pending_deletes',
+      {'id': id, 'deleted_at': DateTime.now().toIso8601String()},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<String>> getPendingDeletes() async {
+    final db = await database;
+    final maps = await db.query('pending_deletes');
+    return maps.map((m) => m['id'] as String).toList();
+  }
+
+  Future<void> clearPendingDelete(String id) async {
+    final db = await database;
+    await db.delete('pending_deletes', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> clearAllPendingDeletes() async {
+    final db = await database;
+    await db.delete('pending_deletes');
   }
 
   Future<List<MoodEntry>> getAllEntries() async {

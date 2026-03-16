@@ -58,14 +58,17 @@ class MoodProvider extends ChangeNotifier {
   }
 
   Future<void> updateEntry(MoodEntry entry) async {
-    await _db.updateMoodEntry(entry.copyWith(isSynced: false));
+    await _db.updateMoodEntry(entry.copyWith(
+      isSynced: false,
+      updatedAt: DateTime.now(),
+    ));
     await loadTodayEntries();
     await loadAllEntries();
     _sync.syncAll();
   }
 
   Future<void> deleteEntry(String id) async {
-    await _db.deleteMoodEntry(id);
+    await _db.deleteMoodEntryAndTrack(id);
     await loadTodayEntries();
     await loadAllEntries();
     _sync.syncAll();
@@ -87,11 +90,15 @@ class MoodProvider extends ChangeNotifier {
   }
 
   Future<void> deleteAllEntries() async {
-    await _db.deleteAllEntries();
+    // Track each entry for remote deletion
+    for (final entry in _allEntries) {
+      await _db.deleteMoodEntryAndTrack(entry.id);
+    }
     _allEntries = [];
     _todayEntries = [];
     _filteredEntries = [];
     notifyListeners();
+    _sync.syncAll();
   }
 
   List<MoodEntry> getEntriesForDate(DateTime date) {

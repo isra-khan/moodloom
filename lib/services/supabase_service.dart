@@ -42,11 +42,21 @@ class SupabaseService {
     var query = c.from('mood_entries').select().eq('user_id', user.id);
 
     if (lastSync != null) {
-      query = query.gt('created_at', lastSync.toIso8601String());
+      // Use updated_at so edits (not just new entries) are also pulled
+      query = query.gt('updated_at', lastSync.toIso8601String());
     }
 
     final data = await query.order('created_at', ascending: false);
     return (data as List).map((e) => MoodEntry.fromSupabase(e)).toList();
+  }
+
+  /// Delete a list of entries from Supabase by their IDs
+  static Future<void> deleteEntries(List<String> ids) async {
+    final c = client;
+    if (c == null || ids.isEmpty) return;
+    for (final id in ids) {
+      await c.from('mood_entries').delete().eq('id', id);
+    }
   }
 
   static Future<void> deleteEntry(String id) async {
