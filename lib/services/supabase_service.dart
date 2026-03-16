@@ -2,8 +2,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/mood_entry.dart';
 
 class SupabaseService {
-  static const String _supabaseUrl = 'YOUR_SUPABASE_URL';
-  static const String _supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+  static const String _supabaseUrl = 'https://ekmydubqsweovjbhvlnt.supabase.co';
+  static const String _supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrbXlkdWJxc3dlb3ZqYmh2bG50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzIwNzAsImV4cCI6MjA3OTU0ODA3MH0.X9VLQcPKz07567QzT2Eu5RV-pTQJsJBa7oyMHOV4dDI';
 
   static bool _initialized = false;
 

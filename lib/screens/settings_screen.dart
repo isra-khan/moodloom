@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import '../providers/mood_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/app_lock_service.dart';
+import '../services/auth_service.dart';
 import '../services/export_service.dart';
 import '../services/notification_service.dart';
+import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 import 'custom_moods_screen.dart';
 
@@ -82,6 +84,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         return Switch(
                           value: settings.isDarkMode,
                           activeThumbColor: AppTheme.primaryTeal,
+                          activeTrackColor: AppTheme.primaryTeal.withValues(alpha: 0.3),
+                          inactiveThumbColor: AppTheme.lightTeal,
+                          inactiveTrackColor: AppTheme.lightTeal.withValues(alpha: 0.3),
+                          trackOutlineColor: WidgetStatePropertyAll(Colors.transparent),
                           onChanged: (_) => settings.toggleDarkMode(),
                         );
                       },
@@ -139,6 +145,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Switch(
                           value: _appLockEnabled,
                           activeThumbColor: AppTheme.primaryTeal,
+                          activeTrackColor: AppTheme.primaryTeal.withValues(alpha: 0.3),
+                          inactiveThumbColor: AppTheme.lightTeal,
+                          inactiveTrackColor: AppTheme.lightTeal.withValues(alpha: 0.3),
+                          trackOutlineColor: WidgetStatePropertyAll(Colors.transparent),
                           onChanged: (value) async {
                             if (value) {
                               _showSetPinDialog();
@@ -187,6 +197,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Switch(
                           value: _reminderEnabled,
                           activeThumbColor: AppTheme.primaryTeal,
+                          activeTrackColor: AppTheme.primaryTeal.withValues(alpha: 0.3),
+                          inactiveThumbColor: AppTheme.lightTeal,
+                          inactiveTrackColor: AppTheme.lightTeal.withValues(alpha: 0.3),
+                          trackOutlineColor: WidgetStatePropertyAll(Colors.transparent),
                           onChanged: (value) async {
                             setState(() => _reminderEnabled = value);
                             if (value) {
@@ -319,6 +333,95 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ).animate(delay: 250.ms).fadeIn().slideY(begin: 0.1, end: 0),
               const SizedBox(height: 16),
+
+              // Account & Sync
+              if (SupabaseService.isInitialized)
+                NeuBox(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.cloud_sync_outlined, color: AppTheme.primaryTeal),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Account & Sync',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textColor),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (AuthService.isLoggedIn) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryTeal.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.check_circle, color: AppTheme.primaryTeal, size: 20),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Signed in',
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textColor),
+                                    ),
+                                    Text(
+                                      AuthService.currentUser?.email ?? '',
+                                      style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.5)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        NeuButton(
+                          onPressed: () async {
+                            await AuthService.signOut();
+                            if (mounted) {
+                              Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
+                            }
+                          },
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.logout, color: Colors.red, size: 20),
+                              SizedBox(width: 8),
+                              Text('Sign Out', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
+                      ] else ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.cloud_off, color: Colors.orange, size: 20),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Not signed in. Data is stored locally only.',
+                                  style: TextStyle(fontSize: 13, color: textColor.withValues(alpha: 0.6)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ).animate(delay: 275.ms).fadeIn().slideY(begin: 0.1, end: 0),
+              if (SupabaseService.isInitialized) const SizedBox(height: 16),
 
               // About
               NeuBox(

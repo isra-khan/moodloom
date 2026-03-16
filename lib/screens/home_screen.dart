@@ -20,6 +20,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String _quote = Quotes.getDailyQuote();
+  String? _author = Quotes.getQuoteAuthor();
+
   @override
   void initState() {
     super.initState();
@@ -27,6 +30,17 @@ class _HomeScreenState extends State<HomeScreen> {
       context.read<MoodProvider>().loadTodayEntries();
       context.read<MoodProvider>().loadAllEntries();
     });
+    _loadQuote();
+  }
+
+  Future<void> _loadQuote() async {
+    await Quotes.fetchDailyQuote();
+    if (mounted) {
+      setState(() {
+        _quote = Quotes.getDailyQuote();
+        _author = Quotes.getQuoteAuthor();
+      });
+    }
   }
 
   String _getGreeting() {
@@ -99,13 +113,29 @@ class _HomeScreenState extends State<HomeScreen> {
                               const Text('💡', style: TextStyle(fontSize: 22)),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Text(
-                                  Quotes.getDailyQuote(),
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontStyle: FontStyle.italic,
-                                    color: textColor.withValues(alpha: 0.7),
-                                  ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _quote,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontStyle: FontStyle.italic,
+                                        color: textColor.withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                    if (_author != null) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '— $_author',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: textColor.withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
                             ],
@@ -142,25 +172,31 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Stats row
                         Row(
                           children: [
-                            _StatCard(
-                              title: 'Streak',
-                              value: '${mood.currentStreak}',
-                              icon: Icons.local_fire_department,
-                              color: Colors.orange,
+                            Expanded(
+                              child: _StatCard(
+                                title: 'Streak',
+                                value: '${mood.currentStreak}',
+                                icon: Icons.local_fire_department,
+                                color: Colors.orange,
+                              ),
                             ),
                             const SizedBox(width: 12),
-                            _StatCard(
-                              title: 'Today',
-                              value: '${mood.todayEntries.length}',
-                              icon: Icons.today,
-                              color: AppTheme.primaryTeal,
+                            Expanded(
+                              child: _StatCard(
+                                title: 'Today',
+                                value: '${mood.todayEntries.length}',
+                                icon: Icons.today,
+                                color: AppTheme.primaryTeal,
+                              ),
                             ),
                             const SizedBox(width: 12),
-                            _StatCard(
-                              title: 'Total',
-                              value: '${mood.totalEntries}',
-                              icon: Icons.bar_chart,
-                              color: AppTheme.lightTeal,
+                            Expanded(
+                              child: _StatCard(
+                                title: 'Total',
+                                value: '${mood.totalEntries}',
+                                icon: Icons.bar_chart,
+                                color: AppTheme.lightTeal,
+                              ),
                             ),
                           ],
                         ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.2, end: 0),
@@ -383,30 +419,28 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).colorScheme.onSurface;
-    return Expanded(
-      child: NeuBox(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
+    return NeuBox(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: textColor,
             ),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                color: textColor.withValues(alpha: 0.5),
-              ),
+          ),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: textColor.withValues(alpha: 0.5),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

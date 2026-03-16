@@ -4,10 +4,12 @@ import 'providers/mood_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/tag_provider.dart';
 import 'services/app_lock_service.dart';
+import 'services/auth_service.dart';
 import 'services/database_service.dart';
 import 'services/notification_service.dart';
 import 'services/supabase_service.dart';
 import 'services/sync_service.dart';
+import 'screens/auth/login_screen.dart';
 import 'screens/lock_screen.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
@@ -65,9 +67,7 @@ class MoodLoomApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-            home: lockEnabled
-                ? _LockedApp(onUnlocked: () {})
-                : const SplashScreen(),
+            home: _AppEntry(lockEnabled: lockEnabled),
           );
         },
       ),
@@ -75,20 +75,57 @@ class MoodLoomApp extends StatelessWidget {
   }
 }
 
-class _LockedApp extends StatefulWidget {
-  final VoidCallback onUnlocked;
-  const _LockedApp({required this.onUnlocked});
+class _AppEntry extends StatefulWidget {
+  final bool lockEnabled;
+  const _AppEntry({required this.lockEnabled});
 
   @override
-  State<_LockedApp> createState() => _LockedAppState();
+  State<_AppEntry> createState() => _AppEntryState();
 }
 
-class _LockedAppState extends State<_LockedApp> {
-  bool _unlocked = false;
+class _AppEntryState extends State<_AppEntry> {
+  bool _pinUnlocked = false;
+  bool _authChecked = false;
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pinUnlocked = !widget.lockEnabled;
+    _checkAuth();
+  }
+
+  void _checkAuth() {
+    _isLoggedIn = AuthService.isLoggedIn;
+    _authChecked = true;
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (_unlocked) return const SplashScreen();
-    return LockScreen(onUnlocked: () => setState(() => _unlocked = true));
+    // Step 1: PIN lock
+    if (!_pinUnlocked) {
+      return LockScreen(
+        onUnlocked: () => setState(() => _pinUnlocked = true),
+      );
+    }
+
+    // Step 2: Auth check
+    if (!_authChecked) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: AppTheme.primaryTeal)),
+      );
+    }
+
+    // Step 3: Login or Splash
+    if (!_isLoggedIn && SupabaseService.isInitialized) {
+      return LoginScreen(
+        onLoginSuccess: () => setState(() {
+          _isLoggedIn = true;
+        }),
+      );
+    }
+
+    return const SplashScreen();
   }
 }

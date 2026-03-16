@@ -1,7 +1,13 @@
+import 'dart:convert';
 import 'dart:math';
+import 'package:http/http.dart' as http;
+
 
 class Quotes {
   static final _random = Random();
+  static String? _cachedQuote;
+  static String? _cachedAuthor;
+  static bool _isFetching = false;
 
   static const List<String> motivationalQuotes = [
     "Every day is a fresh start. 🌅",
@@ -59,10 +65,41 @@ class Quotes {
     "What's one small win from today?",
   ];
 
+  /// Fetches a fresh quote from the API every time the screen loads.
+  static Future<void> fetchDailyQuote() async {
+    if (_isFetching) return;
+    _isFetching = true;
+
+    try {
+      final response = await http
+          .get(Uri.parse('https://zenquotes.io/api/random'))
+          .timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        if (data.isNotEmpty) {
+          _cachedQuote = data[0]['q'] as String?;
+          _cachedAuthor = data[0]['a'] as String?;
+        }
+      }
+    } catch (_) {
+      // Silently fall back to local quotes
+    } finally {
+      _isFetching = false;
+    }
+  }
+
+  /// Returns the API quote if available, otherwise a local daily quote.
   static String getDailyQuote() {
+    if (_cachedQuote != null && _cachedQuote!.isNotEmpty) {
+      return '"$_cachedQuote"';
+    }
     final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year)).inDays;
     return motivationalQuotes[dayOfYear % motivationalQuotes.length];
   }
+
+  /// Returns the author of the API quote, or null if using local.
+  static String? getQuoteAuthor() => _cachedAuthor;
 
   static String getRandomQuote() {
     return motivationalQuotes[_random.nextInt(motivationalQuotes.length)];
