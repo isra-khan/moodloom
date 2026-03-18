@@ -271,22 +271,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: NeuButton(
-                            onPressed: () => _export('csv'),
-                            child: const Text('Export CSV', style: TextStyle(color: AppTheme.primaryTeal, fontWeight: FontWeight.w600)),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: NeuButton(
-                            onPressed: () => _export('json'),
-                            child: const Text('Export JSON', style: TextStyle(color: AppTheme.primaryTeal, fontWeight: FontWeight.w600)),
-                          ),
-                        ),
-                      ],
+                    NeuButton(
+                      onPressed: () => _export(),
+                      child: const Text('Export CSV', style: TextStyle(color: AppTheme.primaryTeal, fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),
@@ -424,17 +411,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (SupabaseService.isInitialized) const SizedBox(height: 16),
 
               // About
-              NeuBox(
-                child: Column(
-                  children: [
-                    const Text('🌿', style: TextStyle(fontSize: 36)),
-                    const SizedBox(height: 8),
-                    Text('MoodLoom', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
-                    const SizedBox(height: 4),
-                    Text('Version 1.0.0', style: TextStyle(fontSize: 13, color: textColor.withValues(alpha: 0.5))),
-                    const SizedBox(height: 4),
-                    Text('Weave your wellness', style: TextStyle(fontSize: 13, color: textColor.withValues(alpha: 0.4))),
-                  ],
+              SizedBox(
+                width: double.infinity,
+                child: NeuBox(
+                  child: Column(
+                    children: [
+                      const Text('🌿', style: TextStyle(fontSize: 36)),
+                      const SizedBox(height: 8),
+                      Text('MoodLoom', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
+                      const SizedBox(height: 4),
+                      Text('Version 1.0.0', style: TextStyle(fontSize: 13, color: textColor.withValues(alpha: 0.5))),
+                      const SizedBox(height: 4),
+                      Text('Weave your wellness', style: TextStyle(fontSize: 13, color: textColor.withValues(alpha: 0.4))),
+                    ],
+                  ),
                 ),
               ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.1, end: 0),
               const SizedBox(height: 40),
@@ -445,7 +435,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _export(String format) {
+  void _export() {
     final entries = context.read<MoodProvider>().allEntries;
     if (entries.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -458,11 +448,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       return;
     }
-    if (format == 'csv') {
-      ExportService.exportAsCsv(entries);
-    } else {
-      ExportService.exportAsJson(entries);
-    }
+    ExportService.exportAsCsv(entries);
   }
 
   void _showSetPinDialog() {

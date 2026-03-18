@@ -13,19 +13,27 @@ class MoodLoomBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppTheme.darkCard : AppTheme.surfaceColor;
+    final shadowLight = isDark ? AppTheme.darkShadowLight : AppTheme.shadowLight;
+    final shadowDark = isDark ? AppTheme.darkShadowDark : AppTheme.shadowDark;
+    final unselectedColor = isDark
+        ? Colors.white.withValues(alpha: 0.4)
+        : AppTheme.darkTeal.withValues(alpha: 0.4);
+
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
+        color: bgColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.shadowDark.withValues(alpha: 0.4),
+            color: shadowDark.withValues(alpha: 0.4),
             offset: const Offset(6, 6),
             blurRadius: 15,
           ),
           BoxShadow(
-            color: AppTheme.shadowLight.withValues(alpha: 0.9),
+            color: shadowLight.withValues(alpha: 0.9),
             offset: const Offset(-6, -6),
             blurRadius: 15,
           ),
@@ -37,9 +45,9 @@ class MoodLoomBottomNav extends StatelessWidget {
           currentIndex: currentIndex,
           onTap: onTap,
           type: BottomNavigationBarType.fixed,
-          backgroundColor: AppTheme.surfaceColor,
+          backgroundColor: bgColor,
           selectedItemColor: AppTheme.primaryTeal,
-          unselectedItemColor: AppTheme.darkTeal.withValues(alpha: 0.4),
+          unselectedItemColor: unselectedColor,
           elevation: 0,
           selectedFontSize: 12,
           unselectedFontSize: 11,

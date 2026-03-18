@@ -148,9 +148,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       // Mood filter
                       NeuButton(
                         onPressed: () {
+                          final isDark = Theme.of(context).brightness == Brightness.dark;
                           showModalBottomSheet(
                             context: context,
-                            backgroundColor: AppTheme.surfaceColor,
+                            backgroundColor: isDark ? AppTheme.darkCard : AppTheme.surfaceColor,
                             shape: const RoundedRectangleBorder(
                               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                             ),

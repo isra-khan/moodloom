@@ -16,6 +16,11 @@ class MoodEmojiPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppTheme.darkCard : AppTheme.surfaceColor;
+    final shadowLight = isDark ? AppTheme.darkShadowLight : AppTheme.shadowLight;
+    final shadowDark = isDark ? AppTheme.darkShadowDark : AppTheme.shadowDark;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(5, (index) {
@@ -31,7 +36,7 @@ class MoodEmojiPicker extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected
                   ? MoodColors.getColor(level).withValues(alpha: 0.2)
-                  : AppTheme.surfaceColor,
+                  : bgColor,
               shape: BoxShape.circle,
               border: isSelected
                   ? Border.all(color: MoodColors.getColor(level), width: 3)
@@ -46,12 +51,12 @@ class MoodEmojiPicker extends StatelessWidget {
                     ]
                   : [
                       BoxShadow(
-                        color: AppTheme.shadowDark.withValues(alpha: 0.3),
+                        color: shadowDark.withValues(alpha: 0.3),
                         offset: const Offset(4, 4),
                         blurRadius: 8,
                       ),
                       BoxShadow(
-                        color: AppTheme.shadowLight.withValues(alpha: 0.8),
+                        color: shadowLight.withValues(alpha: 0.8),
                         offset: const Offset(-4, -4),
                         blurRadius: 8,
                       ),

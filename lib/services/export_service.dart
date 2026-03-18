@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,25 +28,4 @@ class ExportService {
     await Share.shareXFiles([XFile(file.path)], text: 'MoodLoom Mood Data');
   }
 
-  static Future<void> exportAsJson(List<MoodEntry> entries) async {
-    final data = entries
-        .map((e) => {
-              'date': DateHelpers.formatDate(e.createdAt),
-              'time': DateHelpers.formatTime(e.createdAt),
-              'mood_level': e.moodLevel,
-              'mood_label': e.label,
-              'emoji': e.emoji,
-              'note': e.note,
-              'journal_entry': e.journalEntry,
-              'tags': e.tags,
-            })
-        .toList();
-
-    final json = const JsonEncoder.withIndent('  ').convert(data);
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/moodloom_export.json');
-    await file.writeAsString(json);
-
-    await Share.shareXFiles([XFile(file.path)], text: 'MoodLoom Mood Data');
-  }
 }

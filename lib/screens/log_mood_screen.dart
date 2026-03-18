@@ -1,8 +1,12 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../providers/mood_provider.dart';
 import '../providers/tag_provider.dart';
+import '../services/face_mood_service.dart';
+import '../services/sentiment_service.dart';
+import '../services/speech_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/quotes.dart';
 import '../widgets/mood_emoji_picker.dart';
@@ -20,17 +24,32 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
   final _journalController = TextEditingController();
   final _tagController = TextEditingController();
   final List<String> _selectedTags = [];
+  final SpeechService _speechService = SpeechService();
+  final FaceMoodService _faceMoodService = FaceMoodService();
+  bool _isListeningNote = false;
+  bool _isListeningJournal = false;
+  String? _moodSuggestionText;
+  bool _isDetectingFace = false;
 
   @override
   void dispose() {
     _noteController.dispose();
     _journalController.dispose();
     _tagController.dispose();
+    _faceMoodService.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inputBgColor = isDark ? AppTheme.darkCard : AppTheme.surfaceColor;
+    final chipBgColor = isDark ? AppTheme.darkCard : AppTheme.surfaceColor;
+    final shadowLight = isDark ? AppTheme.darkShadowLight : AppTheme.shadowLight;
+    final shadowDark = isDark ? AppTheme.darkShadowDark : AppTheme.shadowDark;
+    final textColor = isDark ? Colors.white : AppTheme.darkTeal;
+    final hintColor = isDark ? Colors.white.withValues(alpha: 0.3) : AppTheme.darkTeal.withValues(alpha: 0.3);
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -64,14 +83,61 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
               NeuBox(
                 child: Column(
                   children: [
-                    const Text(
-                      'Select your mood',
-                      style: TextStyle(fontSize: 16, color: AppTheme.darkTeal),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Select your mood',
+                          style: TextStyle(fontSize: 16, color: textColor),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: _isDetectingFace ? null : _detectMoodFromCamera,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _isDetectingFace ? AppTheme.primaryTeal : inputBgColor,
+                              shape: BoxShape.circle,
+                              boxShadow: _isDetectingFace
+                                  ? []
+                                  : [
+                                      BoxShadow(
+                                        color: shadowDark.withValues(alpha: 0.2),
+                                        offset: const Offset(2, 2),
+                                        blurRadius: 4,
+                                      ),
+                                      BoxShadow(
+                                        color: shadowLight.withValues(alpha: 0.7),
+                                        offset: const Offset(-2, -2),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                            ),
+                            child: Icon(
+                              Icons.camera_alt,
+                              size: 20,
+                              color: _isDetectingFace ? Colors.white : AppTheme.primaryTeal,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                    if (_isDetectingFace)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Analyzing your expression...',
+                          style: TextStyle(fontSize: 12, color: AppTheme.primaryTeal.withValues(alpha: 0.7)),
+                        ),
+                      ),
                     const SizedBox(height: 16),
                     MoodEmojiPicker(
                       selectedMood: _selectedMood,
-                      onMoodSelected: (level) => setState(() => _selectedMood = level),
+                      onMoodSelected: (level) => setState(() {
+                        _selectedMood = level;
+                        _moodSuggestionText = null;
+                      }),
                     ),
                     if (_selectedMood != null) ...[
                       const SizedBox(height: 12),
@@ -84,6 +150,29 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                         ),
                       ).animate().fadeIn().scale(),
                     ],
+                    if (_moodSuggestionText != null) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryTeal.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.auto_awesome, size: 16, color: AppTheme.primaryTeal),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                _moodSuggestionText!,
+                                style: const TextStyle(fontSize: 12, color: AppTheme.primaryTeal),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ).animate().fadeIn(),
+                    ],
                   ],
                 ),
               ).animate(delay: 100.ms).fadeIn().slideY(begin: 0.1, end: 0),
@@ -94,23 +183,66 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Quick note (optional)',
-                      style: TextStyle(fontSize: 14, color: AppTheme.darkTeal),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Quick note (optional)',
+                          style: TextStyle(fontSize: 14, color: textColor),
+                        ),
+                        GestureDetector(
+                          onTap: () => _toggleListening(isNote: true),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _isListeningNote ? AppTheme.primaryTeal : inputBgColor,
+                              shape: BoxShape.circle,
+                              boxShadow: _isListeningNote
+                                  ? []
+                                  : [
+                                      BoxShadow(
+                                        color: shadowDark.withValues(alpha: 0.2),
+                                        offset: const Offset(2, 2),
+                                        blurRadius: 4,
+                                      ),
+                                      BoxShadow(
+                                        color: shadowLight.withValues(alpha: 0.7),
+                                        offset: const Offset(-2, -2),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                            ),
+                            child: Icon(
+                              _isListeningNote ? Icons.stop : Icons.mic,
+                              size: 20,
+                              color: _isListeningNote ? Colors.white : AppTheme.primaryTeal,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                    if (_isListeningNote)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, bottom: 4),
+                        child: Text(
+                          'Listening... speak now',
+                          style: TextStyle(fontSize: 12, color: AppTheme.primaryTeal.withValues(alpha: 0.7)),
+                        ),
+                      ),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceColor,
+                        color: inputBgColor,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.shadowDark.withValues(alpha: 0.2),
+                            color: shadowDark.withValues(alpha: 0.2),
                             offset: const Offset(2, 2),
                             blurRadius: 4,
                           ),
                           BoxShadow(
-                            color: AppTheme.shadowLight.withValues(alpha: 0.7),
+                            color: shadowLight.withValues(alpha: 0.7),
                             offset: const Offset(-2, -2),
                             blurRadius: 4,
                           ),
@@ -121,11 +253,11 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                         maxLines: 2,
                         decoration: InputDecoration(
                           hintText: 'What\'s on your mind?',
-                          hintStyle: TextStyle(color: AppTheme.darkTeal.withValues(alpha: 0.3)),
+                          hintStyle: TextStyle(color: hintColor),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.all(12),
                         ),
-                        style: const TextStyle(color: AppTheme.darkTeal),
+                        style: TextStyle(color: textColor),
                       ),
                     ),
                   ],
@@ -138,9 +270,9 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Tags',
-                      style: TextStyle(fontSize: 14, color: AppTheme.darkTeal),
+                      style: TextStyle(fontSize: 14, color: textColor),
                     ),
                     const SizedBox(height: 8),
                     Consumer<TagProvider>(
@@ -164,18 +296,18 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                                 duration: const Duration(milliseconds: 200),
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? AppTheme.primaryTeal : AppTheme.surfaceColor,
+                                  color: isSelected ? AppTheme.primaryTeal : chipBgColor,
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: isSelected
                                       ? []
                                       : [
                                           BoxShadow(
-                                            color: AppTheme.shadowDark.withValues(alpha: 0.2),
+                                            color: shadowDark.withValues(alpha: 0.2),
                                             offset: const Offset(2, 2),
                                             blurRadius: 4,
                                           ),
                                           BoxShadow(
-                                            color: AppTheme.shadowLight.withValues(alpha: 0.7),
+                                            color: shadowLight.withValues(alpha: 0.7),
                                             offset: const Offset(-2, -2),
                                             blurRadius: 4,
                                           ),
@@ -185,7 +317,7 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                                   tag,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: isSelected ? Colors.white : AppTheme.darkTeal,
+                                    color: isSelected ? Colors.white : textColor,
                                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                                   ),
                                 ),
@@ -205,12 +337,12 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                               hintText: 'Add custom tag...',
                               hintStyle: TextStyle(
                                 fontSize: 13,
-                                color: AppTheme.darkTeal.withValues(alpha: 0.3),
+                                color: hintColor,
                               ),
                               border: InputBorder.none,
                               isDense: true,
                             ),
-                            style: const TextStyle(fontSize: 13, color: AppTheme.darkTeal),
+                            style: TextStyle(fontSize: 13, color: textColor),
                           ),
                         ),
                         IconButton(
@@ -244,7 +376,7 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontStyle: FontStyle.italic,
-                          color: AppTheme.darkTeal.withValues(alpha: 0.7),
+                          color: textColor.withValues(alpha: 0.7),
                         ),
                       ),
                     ),
@@ -258,23 +390,66 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Journal entry (optional)',
-                      style: TextStyle(fontSize: 14, color: AppTheme.darkTeal),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Journal entry (optional)',
+                          style: TextStyle(fontSize: 14, color: textColor),
+                        ),
+                        GestureDetector(
+                          onTap: () => _toggleListening(isNote: false),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _isListeningJournal ? AppTheme.primaryTeal : inputBgColor,
+                              shape: BoxShape.circle,
+                              boxShadow: _isListeningJournal
+                                  ? []
+                                  : [
+                                      BoxShadow(
+                                        color: shadowDark.withValues(alpha: 0.2),
+                                        offset: const Offset(2, 2),
+                                        blurRadius: 4,
+                                      ),
+                                      BoxShadow(
+                                        color: shadowLight.withValues(alpha: 0.7),
+                                        offset: const Offset(-2, -2),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                            ),
+                            child: Icon(
+                              _isListeningJournal ? Icons.stop : Icons.mic,
+                              size: 20,
+                              color: _isListeningJournal ? Colors.white : AppTheme.primaryTeal,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                    if (_isListeningJournal)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, bottom: 4),
+                        child: Text(
+                          'Listening... speak now',
+                          style: TextStyle(fontSize: 12, color: AppTheme.primaryTeal.withValues(alpha: 0.7)),
+                        ),
+                      ),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceColor,
+                        color: inputBgColor,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.shadowDark.withValues(alpha: 0.2),
+                            color: shadowDark.withValues(alpha: 0.2),
                             offset: const Offset(2, 2),
                             blurRadius: 4,
                           ),
                           BoxShadow(
-                            color: AppTheme.shadowLight.withValues(alpha: 0.7),
+                            color: shadowLight.withValues(alpha: 0.7),
                             offset: const Offset(-2, -2),
                             blurRadius: 4,
                           ),
@@ -285,11 +460,11 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                         maxLines: 5,
                         decoration: InputDecoration(
                           hintText: 'Write about your day...',
-                          hintStyle: TextStyle(color: AppTheme.darkTeal.withValues(alpha: 0.3)),
+                          hintStyle: TextStyle(color: hintColor),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.all(12),
                         ),
-                        style: const TextStyle(color: AppTheme.darkTeal),
+                        style: TextStyle(color: textColor),
                       ),
                     ),
                   ],
@@ -337,6 +512,129 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _toggleListening({required bool isNote}) async {
+    // Stop any active listening first
+    if (_speechService.isListening) {
+      await _speechService.stopListening(
+        onListening: (_) => setState(() {
+          _isListeningNote = false;
+          _isListeningJournal = false;
+        }),
+      );
+      return;
+    }
+
+    final available = await _speechService.initialize();
+    if (!available) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Speech recognition not available on this device'),
+            backgroundColor: AppTheme.primaryTeal,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isListeningNote = isNote;
+      _isListeningJournal = !isNote;
+    });
+
+    await _speechService.startListening(
+      onResult: (translatedText) {
+        setState(() {
+          if (isNote) {
+            _noteController.text = _noteController.text.isEmpty
+                ? translatedText
+                : '${_noteController.text} $translatedText';
+          } else {
+            _journalController.text = _journalController.text.isEmpty
+                ? translatedText
+                : '${_journalController.text} $translatedText';
+          }
+          _isListeningNote = false;
+          _isListeningJournal = false;
+
+          // Auto-suggest mood from text sentiment
+          final allText = '${_noteController.text} ${_journalController.text}'.trim();
+          final suggestedMood = SentimentService.analyzeMood(allText);
+          if (suggestedMood != null && _selectedMood == null) {
+            _selectedMood = suggestedMood;
+            _moodSuggestionText = SentimentService.getMoodReason(allText);
+          }
+        });
+      },
+      onListening: (listening) {
+        if (!listening) {
+          setState(() {
+            _isListeningNote = false;
+            _isListeningJournal = false;
+          });
+        }
+      },
+    );
+  }
+
+  Future<void> _detectMoodFromCamera() async {
+    setState(() => _isDetectingFace = true);
+
+    try {
+      final cameras = await availableCameras();
+      // Prefer front camera
+      final frontCamera = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.front,
+        orElse: () => cameras.first,
+      );
+
+      final controller = CameraController(
+        frontCamera,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+
+      await controller.initialize();
+      final image = await controller.takePicture();
+      await controller.dispose();
+
+      final result = await _faceMoodService.detectMoodFromImage(image);
+
+      if (!mounted) return;
+
+      if (result != null) {
+        setState(() {
+          _selectedMood = result.moodLevel;
+          _moodSuggestionText = result.label;
+          _isDetectingFace = false;
+        });
+      } else {
+        setState(() => _isDetectingFace = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No face detected. Please try again.'),
+            backgroundColor: AppTheme.primaryTeal,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isDetectingFace = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Could not access camera. Please check permissions.'),
+          backgroundColor: AppTheme.primaryTeal,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   String _getMoodLabel() {

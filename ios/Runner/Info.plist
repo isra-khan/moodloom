@@ -41,6 +41,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>MoodLoom needs speech recognition to convert your voice to text for journal entries.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>MoodLoom needs microphone access to record your voice for journal entries.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>MoodLoom uses the camera to detect your mood from your facial expression.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
