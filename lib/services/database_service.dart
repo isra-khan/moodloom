@@ -1,6 +1,8 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/mood_entry.dart';
+import '../models/dream_entry.dart';
+import '../models/time_capsule.dart';
 
 class DatabaseService {
   static Database? _database;
@@ -16,7 +18,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE mood_entries(
@@ -27,7 +29,10 @@ class DatabaseService {
             tags TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            is_synced INTEGER DEFAULT 0
+            is_synced INTEGER DEFAULT 0,
+            latitude REAL,
+            longitude REAL,
+            location_name TEXT
           )
         ''');
         await db.execute('''
@@ -42,21 +47,67 @@ class DatabaseService {
             deleted_at TEXT NOT NULL
           )
         ''');
+        await db.execute('''
+          CREATE TABLE dream_entries(
+            id TEXT PRIMARY KEY,
+            description TEXT NOT NULL,
+            sleep_quality INTEGER NOT NULL,
+            remembered INTEGER DEFAULT 1,
+            tags TEXT,
+            created_at TEXT NOT NULL
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE time_capsules(
+            id TEXT PRIMARY KEY,
+            message TEXT NOT NULL,
+            mood_when_written INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            unlock_at TEXT NOT NULL,
+            is_opened INTEGER DEFAULT 0
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
-          // Add updated_at column with default = created_at
           await db.execute(
             "ALTER TABLE mood_entries ADD COLUMN updated_at TEXT",
           );
           await db.execute(
             "UPDATE mood_entries SET updated_at = created_at WHERE updated_at IS NULL",
           );
-          // Create pending_deletes table
           await db.execute('''
             CREATE TABLE IF NOT EXISTS pending_deletes(
               id TEXT PRIMARY KEY,
               deleted_at TEXT NOT NULL
+            )
+          ''');
+        }
+        if (oldVersion < 3) {
+          // Add location columns to mood_entries
+          await db.execute("ALTER TABLE mood_entries ADD COLUMN latitude REAL");
+          await db.execute("ALTER TABLE mood_entries ADD COLUMN longitude REAL");
+          await db.execute("ALTER TABLE mood_entries ADD COLUMN location_name TEXT");
+          // Create dream_entries table
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS dream_entries(
+              id TEXT PRIMARY KEY,
+              description TEXT NOT NULL,
+              sleep_quality INTEGER NOT NULL,
+              remembered INTEGER DEFAULT 1,
+              tags TEXT,
+              created_at TEXT NOT NULL
+            )
+          ''');
+          // Create time_capsules table
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS time_capsules(
+              id TEXT PRIMARY KEY,
+              message TEXT NOT NULL,
+              mood_when_written INTEGER NOT NULL,
+              created_at TEXT NOT NULL,
+              unlock_at TEXT NOT NULL,
+              is_opened INTEGER DEFAULT 0
             )
           ''');
         }
@@ -194,6 +245,56 @@ class DatabaseService {
       'mood_entries',
       where: 'note LIKE ? OR journal_entry LIKE ? OR tags LIKE ?',
       whereArgs: ['%$query%', '%$query%', '%$query%'],
+      orderBy: 'created_at DESC',
+    );
+    return maps.map((map) => MoodEntry.fromMap(map)).toList();
+  }
+
+  // --- Dream Journal ---
+  Future<void> insertDreamEntry(DreamEntry entry) async {
+    final db = await database;
+    await db.insert('dream_entries', entry.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<DreamEntry>> getAllDreamEntries() async {
+    final db = await database;
+    final maps = await db.query('dream_entries', orderBy: 'created_at DESC');
+    return maps.map((map) => DreamEntry.fromMap(map)).toList();
+  }
+
+  Future<void> deleteDreamEntry(String id) async {
+    final db = await database;
+    await db.delete('dream_entries', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // --- Time Capsules ---
+  Future<void> insertTimeCapsule(TimeCapsule capsule) async {
+    final db = await database;
+    await db.insert('time_capsules', capsule.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<TimeCapsule>> getAllTimeCapsules() async {
+    final db = await database;
+    final maps = await db.query('time_capsules', orderBy: 'unlock_at ASC');
+    return maps.map((map) => TimeCapsule.fromMap(map)).toList();
+  }
+
+  Future<void> openTimeCapsule(String id) async {
+    final db = await database;
+    await db.update('time_capsules', {'is_opened': 1}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> deleteTimeCapsule(String id) async {
+    final db = await database;
+    await db.delete('time_capsules', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // --- Location-based mood queries ---
+  Future<List<MoodEntry>> getEntriesWithLocation() async {
+    final db = await database;
+    final maps = await db.query(
+      'mood_entries',
+      where: 'latitude IS NOT NULL AND longitude IS NOT NULL',
       orderBy: 'created_at DESC',
     );
     return maps.map((map) => MoodEntry.fromMap(map)).toList();

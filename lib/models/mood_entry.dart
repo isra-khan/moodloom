@@ -7,6 +7,9 @@ class MoodEntry {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isSynced;
+  final double? latitude;
+  final double? longitude;
+  final String? locationName;
 
   MoodEntry({
     required this.id,
@@ -17,6 +20,9 @@ class MoodEntry {
     required this.createdAt,
     DateTime? updatedAt,
     this.isSynced = false,
+    this.latitude,
+    this.longitude,
+    this.locationName,
   }) : updatedAt = updatedAt ?? createdAt;
 
   static const Map<int, String> moodEmojis = {
@@ -48,6 +54,9 @@ class MoodEntry {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'is_synced': isSynced ? 1 : 0,
+      'latitude': latitude,
+      'longitude': longitude,
+      'location_name': locationName,
     };
   }
 
@@ -66,6 +75,9 @@ class MoodEntry {
           ? DateTime.parse(map['updated_at'] as String)
           : createdAt,
       isSynced: (map['is_synced'] as int?) == 1,
+      latitude: map['latitude'] as double?,
+      longitude: map['longitude'] as double?,
+      locationName: map['location_name'] as String?,
     );
   }
 
@@ -114,6 +126,9 @@ class MoodEntry {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isSynced,
+    double? latitude,
+    double? longitude,
+    String? locationName,
   }) {
     return MoodEntry(
       id: id ?? this.id,
@@ -124,6 +139,9 @@ class MoodEntry {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      locationName: locationName ?? this.locationName,
     );
   }
 }

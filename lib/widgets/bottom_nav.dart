@@ -54,6 +54,7 @@ class MoodLoomBottomNav extends StatelessWidget {
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
             BottomNavigationBarItem(icon: Icon(Icons.calendar_month_rounded), label: 'Calendar'),
+            BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: 'Discover'),
             BottomNavigationBarItem(icon: Icon(Icons.insights_rounded), label: 'Insights'),
             BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'Settings'),
           ],

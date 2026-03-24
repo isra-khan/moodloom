@@ -4,11 +4,17 @@ import 'package:provider/provider.dart';
 import '../models/achievement.dart';
 import '../models/mood_entry.dart';
 import '../providers/mood_provider.dart';
+import '../services/mood_pattern_service.dart';
+import '../services/mood_prediction_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/date_helpers.dart';
 import '../utils/quotes.dart';
 import '../widgets/mood_entry_tile.dart';
+import 'breathing_screen.dart';
 import 'log_mood_screen.dart';
+import 'mood_avatar_screen.dart';
+import '../services/mood_avatar_service.dart';
+import '../widgets/mood_tree_painter.dart';
 import 'search_screen.dart';
 import 'journal_detail_screen.dart';
 
@@ -202,6 +208,48 @@ class _HomeScreenState extends State<HomeScreen> {
                         ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.2, end: 0),
                         const SizedBox(height: 20),
 
+                        // Mood Avatar Tree
+                        Builder(builder: (_) {
+                          final avatarState = MoodAvatarService.calculateState(mood.allEntries);
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const MoodAvatarScreen()));
+                            },
+                            child: NeuBox(
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 80,
+                                    height: 80,
+                                    child: MoodTreeWidget(state: avatarState, size: 80),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Your Tree',
+                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          avatarState.message,
+                                          style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.6)),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(Icons.chevron_right, color: textColor.withValues(alpha: 0.3)),
+                                ],
+                              ),
+                            ),
+                          ).animate(delay: 220.ms).fadeIn().slideY(begin: 0.1, end: 0);
+                        }),
+                        const SizedBox(height: 20),
+
                         // Achievements
                         if (mood.totalEntries > 0) ...[
                           _AchievementsRow(
@@ -210,6 +258,111 @@ class _HomeScreenState extends State<HomeScreen> {
                             journalCount: mood.allEntries.where((e) => e.journalEntry?.isNotEmpty == true).length,
                           ),
                           const SizedBox(height: 20),
+                        ],
+
+                        // Mood Forecast
+                        if (mood.allEntries.length >= 5) ...[
+                          Builder(builder: (_) {
+                            final forecast = MoodPredictionService.predictTomorrow(mood.allEntries);
+                            if (forecast == null) return const SizedBox();
+                            return NeuBox(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(forecast.weatherIcon, style: const TextStyle(fontSize: 32)),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text("Tomorrow's Forecast", style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.5))),
+                                            Text(forecast.weatherLabel, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
+                                          ],
+                                        ),
+                                      ),
+                                      Column(
+                                        children: [
+                                          Text(forecast.emoji, style: const TextStyle(fontSize: 24)),
+                                          Text(forecast.predictedMood.toStringAsFixed(1), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textColor.withValues(alpha: 0.5))),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(forecast.reason, style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.6))),
+                                ],
+                              ),
+                            ).animate(delay: 250.ms).fadeIn().slideY(begin: 0.1, end: 0);
+                          }),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // Pattern Alerts
+                        if (mood.allEntries.length >= 5) ...[
+                          Builder(builder: (_) {
+                            final alerts = MoodPatternService.analyzePatterns(mood.allEntries);
+                            if (alerts.isEmpty) return const SizedBox();
+                            return Column(
+                              children: alerts.take(2).map((alert) {
+                                Color alertColor;
+                                switch (alert.type) {
+                                  case MoodAlertType.warning: alertColor = Colors.orange;
+                                  case MoodAlertType.positive: alertColor = AppTheme.primaryTeal;
+                                  case MoodAlertType.tip: alertColor = const Color(0xFF42A5F5);
+                                }
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: NeuBox(
+                                    padding: const EdgeInsets.all(14),
+                                    child: Row(
+                                      children: [
+                                        Text(alert.emoji, style: const TextStyle(fontSize: 20)),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(alert.title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: alertColor)),
+                                              const SizedBox(height: 2),
+                                              Text(alert.message, style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.6))),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ).animate(delay: 280.ms).fadeIn().slideX(begin: 0.1, end: 0),
+                                );
+                              }).toList(),
+                            );
+                          }),
+                        ],
+
+                        // Breathing shortcut when mood is low
+                        if (mood.todayEntries.isNotEmpty && mood.todayEntries.last.moodLevel <= 2) ...[
+                          NeuButton(
+                            onPressed: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const BreathingScreen()));
+                            },
+                            child: Row(
+                              children: [
+                                const Text('🌊', style: TextStyle(fontSize: 20)),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Feeling low?', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                                      Text('Try a breathing exercise', style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.5))),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right, color: AppTheme.primaryTeal),
+                              ],
+                            ),
+                          ).animate(delay: 290.ms).fadeIn().slideY(begin: 0.1, end: 0),
+                          const SizedBox(height: 16),
                         ],
 
                         // Daily reflection prompt

@@ -184,14 +184,7 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
                         decoration: InputDecoration(
                           hintText: 'Add a note...',
                           hintStyle: TextStyle(color: AppTheme.darkTeal.withValues(alpha: 0.3)),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppTheme.primaryTeal.withValues(alpha: 0.3)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppTheme.primaryTeal),
-                          ),
+                          border: InputBorder.none,
                         ),
                         style: const TextStyle(color: AppTheme.darkTeal),
                       )
@@ -231,14 +224,7 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
                         decoration: InputDecoration(
                           hintText: 'Write about your day...',
                           hintStyle: TextStyle(color: AppTheme.darkTeal.withValues(alpha: 0.3)),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppTheme.primaryTeal.withValues(alpha: 0.3)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppTheme.primaryTeal),
-                          ),
+                          border: InputBorder.none,
                         ),
                         style: const TextStyle(color: AppTheme.darkTeal),
                       )

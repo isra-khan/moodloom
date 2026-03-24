@@ -9,6 +9,7 @@ import '../services/sentiment_service.dart';
 import '../services/speech_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/quotes.dart';
+import '../services/location_service.dart';
 import '../widgets/mood_emoji_picker.dart';
 
 class LogMoodScreen extends StatefulWidget {
@@ -30,6 +31,9 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
   bool _isListeningJournal = false;
   String? _moodSuggestionText;
   bool _isDetectingFace = false;
+  bool _locationEnabled = false;
+  LocationResult? _location;
+  bool _isFetchingLocation = false;
 
   @override
   void dispose() {
@@ -363,6 +367,54 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
               ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.1, end: 0),
               const SizedBox(height: 20),
 
+              // Location toggle
+              NeuBox(
+                child: Row(
+                  children: [
+                    Icon(
+                      _locationEnabled ? Icons.location_on : Icons.location_off_outlined,
+                      color: _locationEnabled ? AppTheme.primaryTeal : textColor.withValues(alpha: 0.4),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Track Location', style: TextStyle(fontSize: 14, color: textColor)),
+                          if (_location != null)
+                            Text(_location!.displayName, style: TextStyle(fontSize: 11, color: AppTheme.primaryTeal)),
+                          if (_isFetchingLocation)
+                            Text('Getting location...', style: TextStyle(fontSize: 11, color: textColor.withValues(alpha: 0.5))),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: _locationEnabled,
+                      activeThumbColor: AppTheme.primaryTeal,
+                      activeTrackColor: AppTheme.primaryTeal.withValues(alpha: 0.3),
+                      trackOutlineColor: WidgetStatePropertyAll(Colors.transparent),
+                      onChanged: (value) async {
+                        setState(() => _locationEnabled = value);
+                        if (value) {
+                          setState(() => _isFetchingLocation = true);
+                          final loc = await LocationService.getCurrentLocation();
+                          if (mounted) {
+                            setState(() {
+                              _location = loc;
+                              _isFetchingLocation = false;
+                              if (loc == null) _locationEnabled = false;
+                            });
+                          }
+                        } else {
+                          setState(() => _location = null);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ).animate(delay: 325.ms).fadeIn().slideY(begin: 0.1, end: 0),
+              const SizedBox(height: 20),
+
               // Reflection prompt
               NeuBox(
                 padding: const EdgeInsets.all(14),
@@ -660,6 +712,9 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
           note: _noteController.text.isNotEmpty ? _noteController.text : null,
           journalEntry: _journalController.text.isNotEmpty ? _journalController.text : null,
           tags: _selectedTags,
+          latitude: _location?.latitude,
+          longitude: _location?.longitude,
+          locationName: _location?.displayName,
         );
 
     Navigator.pop(context);

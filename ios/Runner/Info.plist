@@ -47,6 +47,8 @@
 	<string>MoodLoom needs microphone access to record your voice for journal entries.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>MoodLoom uses the camera to detect your mood from your facial expression.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MoodLoom can track your location to show how different places affect your mood.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

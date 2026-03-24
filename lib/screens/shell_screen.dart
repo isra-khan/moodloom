@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/bottom_nav.dart';
 import 'home_screen.dart';
 import 'calendar_screen.dart';
+import 'discover_screen.dart';
 import 'insights_screen.dart';
 import 'settings_screen.dart';
 
@@ -18,6 +19,7 @@ class _ShellScreenState extends State<ShellScreen> {
   final _screens = const [
     HomeScreen(),
     CalendarScreen(),
+    DiscoverScreen(),
     InsightsScreen(),
     SettingsScreen(),
   ];

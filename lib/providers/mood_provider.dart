@@ -42,6 +42,9 @@ class MoodProvider extends ChangeNotifier {
     String? note,
     String? journalEntry,
     List<String> tags = const [],
+    double? latitude,
+    double? longitude,
+    String? locationName,
   }) async {
     final entry = MoodEntry(
       id: IdGenerator.generate(),
@@ -50,6 +53,9 @@ class MoodProvider extends ChangeNotifier {
       journalEntry: journalEntry,
       tags: tags,
       createdAt: DateTime.now(),
+      latitude: latitude,
+      longitude: longitude,
+      locationName: locationName,
     );
     await _db.insertMoodEntry(entry);
     await loadTodayEntries();

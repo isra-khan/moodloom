@@ -466,7 +466,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           obscureText: true,
           decoration: const InputDecoration(
             hintText: 'Enter 4-digit PIN',
-            border: OutlineInputBorder(),
+            border: InputBorder.none,
           ),
         ),
         actions: [
