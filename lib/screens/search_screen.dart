@@ -3,7 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../providers/mood_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/emoji_widget.dart';
 import '../utils/date_helpers.dart';
+import '../utils/page_transitions.dart';
 import '../widgets/mood_entry_tile.dart';
 import 'journal_detail_screen.dart';
 
@@ -221,8 +223,8 @@ class _SearchScreenState extends State<SearchScreen> {
                         child: MoodEntryTile(
                           entry: filtered[index],
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => JournalDetailScreen(entry: filtered[index]),
+                            Navigator.push(context, smoothPageRoute(
+                              page: JournalDetailScreen(entry: filtered[index]),
                             ));
                           },
                         ).animate(delay: Duration(milliseconds: index * 50))
@@ -265,7 +267,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 },
                 child: Column(
                   children: [
-                    Text(['', '😢', '😔', '😐', '😊', '😄'][level], style: const TextStyle(fontSize: 36)),
+                    EmojiWidget(emoji: ['', '😢', '😔', '😐', '😊', '😄'][level], size: 36),
                     const SizedBox(height: 4),
                     Text(
                       ['', 'Terrible', 'Bad', 'Okay', 'Good', 'Great'][level],

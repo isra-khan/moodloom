@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/page_transitions.dart';
+import '../../widgets/emoji_widget.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -120,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
-                      child: Text('🌿', style: TextStyle(fontSize: 44)),
+                      child: EmojiWidget(emoji: '🌿', size: 44),
                     ),
                   ).animate().scale(
                     begin: const Offset(0.5, 0.5),
@@ -261,8 +263,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(context, MaterialPageRoute(
-                            builder: (_) => SignUpScreen(onSignUpSuccess: widget.onLoginSuccess),
+                          Navigator.push(context, smoothPageRoute(
+                            page: SignUpScreen(onSignUpSuccess: widget.onLoginSuccess),
                           ));
                         },
                         child: const Text(
@@ -315,15 +317,11 @@ class _NeuTextField extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.shadowDark.withValues(alpha: 0.25),
-            offset: const Offset(3, 3),
-            blurRadius: 6,
-          ),
-          BoxShadow(
-            color: AppTheme.shadowLight.withValues(alpha: 0.8),
-            offset: const Offset(-3, -3),
+            color: Colors.black.withValues(alpha: 0.08),
+            offset: const Offset(0, 2),
             blurRadius: 6,
           ),
         ],

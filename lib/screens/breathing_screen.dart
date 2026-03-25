@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../services/breathing_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/emoji_widget.dart';
 
 class BreathingScreen extends StatefulWidget {
   const BreathingScreen({super.key});
@@ -129,7 +130,7 @@ class _BreathingScreenState extends State<BreathingScreen> {
                         color: AppTheme.primaryTeal.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Center(child: Text(exercise.emoji, style: const TextStyle(fontSize: 24))),
+                      child: Center(child: EmojiWidget(emoji: exercise.emoji, size: 24)),
                     ),
                     const SizedBox(width: 14),
                     Expanded(

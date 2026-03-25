@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../models/mood_entry.dart';
+import 'emoji_widget.dart';
 import '../theme/app_theme.dart';
 import '../utils/mood_colors.dart';
 
@@ -18,8 +19,6 @@ class MoodEmojiPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppTheme.darkCard : AppTheme.surfaceColor;
-    final shadowLight = isDark ? AppTheme.darkShadowLight : AppTheme.shadowLight;
-    final shadowDark = isDark ? AppTheme.darkShadowDark : AppTheme.shadowDark;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -40,7 +39,7 @@ class MoodEmojiPicker extends StatelessWidget {
               shape: BoxShape.circle,
               border: isSelected
                   ? Border.all(color: MoodColors.getColor(level), width: 3)
-                  : null,
+                  : Border.all(color: Colors.black.withValues(alpha: isDark ? 0.1 : 0.06)),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
@@ -51,21 +50,16 @@ class MoodEmojiPicker extends StatelessWidget {
                     ]
                   : [
                       BoxShadow(
-                        color: shadowDark.withValues(alpha: 0.3),
-                        offset: const Offset(4, 4),
-                        blurRadius: 8,
-                      ),
-                      BoxShadow(
-                        color: shadowLight.withValues(alpha: 0.8),
-                        offset: const Offset(-4, -4),
-                        blurRadius: 8,
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
+                        offset: const Offset(0, 2),
+                        blurRadius: 6,
                       ),
                     ],
             ),
             child: Center(
-              child: Text(
-                MoodEntry.moodEmojis[level]!,
-                style: TextStyle(fontSize: isSelected ? 36 : 28),
+              child: EmojiWidget(
+                emoji: MoodEntry.moodEmojis[level]!,
+                size: isSelected ? 36 : 28,
               ),
             ),
           ),

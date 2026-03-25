@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/mood_entry.dart';
+import 'emoji_widget.dart';
 import '../theme/app_theme.dart';
 import '../utils/date_helpers.dart';
 import '../utils/mood_colors.dart';
@@ -24,20 +25,23 @@ class MoodEntryTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    MoodColors.getColor(entry.moodLevel).withValues(alpha: 0.3),
-                    MoodColors.getColor(entry.moodLevel).withValues(alpha: 0.1),
-                  ],
+            Hero(
+              tag: 'mood_emoji_${entry.id}',
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      MoodColors.getColor(entry.moodLevel).withValues(alpha: 0.3),
+                      MoodColors.getColor(entry.moodLevel).withValues(alpha: 0.1),
+                    ],
+                  ),
                 ),
-              ),
-              child: Center(
-                child: Text(entry.emoji, style: const TextStyle(fontSize: 28)),
+                child: Center(
+                  child: EmojiWidget(emoji: entry.emoji, size: 28),
+                ),
               ),
             ),
             const SizedBox(width: 16),

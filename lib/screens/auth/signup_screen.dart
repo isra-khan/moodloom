@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/emoji_widget.dart';
 
 class SignUpScreen extends StatefulWidget {
   final VoidCallback onSignUpSuccess;
@@ -133,7 +134,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
-                      child: Text('🌿', style: TextStyle(fontSize: 40)),
+                      child: EmojiWidget(emoji: '🌿', size: 40),
                     ),
                   ).animate().scale(
                     begin: const Offset(0.5, 0.5),
@@ -306,15 +307,11 @@ class _NeuTextField extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.shadowDark.withValues(alpha: 0.25),
-            offset: const Offset(3, 3),
-            blurRadius: 6,
-          ),
-          BoxShadow(
-            color: AppTheme.shadowLight.withValues(alpha: 0.8),
-            offset: const Offset(-3, -3),
+            color: Colors.black.withValues(alpha: 0.08),
+            offset: const Offset(0, 2),
             blurRadius: 6,
           ),
         ],

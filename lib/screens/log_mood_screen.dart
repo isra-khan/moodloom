@@ -10,6 +10,7 @@ import '../services/speech_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/quotes.dart';
 import '../services/location_service.dart';
+import '../widgets/emoji_widget.dart';
 import '../widgets/mood_emoji_picker.dart';
 
 class LogMoodScreen extends StatefulWidget {
@@ -49,10 +50,15 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final inputBgColor = isDark ? AppTheme.darkCard : AppTheme.surfaceColor;
     final chipBgColor = isDark ? AppTheme.darkCard : AppTheme.surfaceColor;
-    final shadowLight = isDark ? AppTheme.darkShadowLight : AppTheme.shadowLight;
-    final shadowDark = isDark ? AppTheme.darkShadowDark : AppTheme.shadowDark;
     final textColor = isDark ? Colors.white : AppTheme.darkTeal;
     final hintColor = isDark ? Colors.white.withValues(alpha: 0.3) : AppTheme.darkTeal.withValues(alpha: 0.3);
+    final flatShadows = [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.06),
+        offset: const Offset(0, 1),
+        blurRadius: 4,
+      ),
+    ];
 
     return Scaffold(
       body: SafeArea(
@@ -103,20 +109,7 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                             decoration: BoxDecoration(
                               color: _isDetectingFace ? AppTheme.primaryTeal : inputBgColor,
                               shape: BoxShape.circle,
-                              boxShadow: _isDetectingFace
-                                  ? []
-                                  : [
-                                      BoxShadow(
-                                        color: shadowDark.withValues(alpha: 0.2),
-                                        offset: const Offset(2, 2),
-                                        blurRadius: 4,
-                                      ),
-                                      BoxShadow(
-                                        color: shadowLight.withValues(alpha: 0.7),
-                                        offset: const Offset(-2, -2),
-                                        blurRadius: 4,
-                                      ),
-                                    ],
+                              boxShadow: _isDetectingFace ? [] : flatShadows,
                             ),
                             child: Icon(
                               Icons.camera_alt,
@@ -202,20 +195,7 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                             decoration: BoxDecoration(
                               color: _isListeningNote ? AppTheme.primaryTeal : inputBgColor,
                               shape: BoxShape.circle,
-                              boxShadow: _isListeningNote
-                                  ? []
-                                  : [
-                                      BoxShadow(
-                                        color: shadowDark.withValues(alpha: 0.2),
-                                        offset: const Offset(2, 2),
-                                        blurRadius: 4,
-                                      ),
-                                      BoxShadow(
-                                        color: shadowLight.withValues(alpha: 0.7),
-                                        offset: const Offset(-2, -2),
-                                        blurRadius: 4,
-                                      ),
-                                    ],
+                              boxShadow: _isListeningNote ? [] : flatShadows,
                             ),
                             child: Icon(
                               _isListeningNote ? Icons.stop : Icons.mic,
@@ -239,18 +219,7 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                       decoration: BoxDecoration(
                         color: inputBgColor,
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: shadowDark.withValues(alpha: 0.2),
-                            offset: const Offset(2, 2),
-                            blurRadius: 4,
-                          ),
-                          BoxShadow(
-                            color: shadowLight.withValues(alpha: 0.7),
-                            offset: const Offset(-2, -2),
-                            blurRadius: 4,
-                          ),
-                        ],
+                        boxShadow: flatShadows,
                       ),
                       child: TextField(
                         controller: _noteController,
@@ -302,20 +271,7 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                                 decoration: BoxDecoration(
                                   color: isSelected ? AppTheme.primaryTeal : chipBgColor,
                                   borderRadius: BorderRadius.circular(20),
-                                  boxShadow: isSelected
-                                      ? []
-                                      : [
-                                          BoxShadow(
-                                            color: shadowDark.withValues(alpha: 0.2),
-                                            offset: const Offset(2, 2),
-                                            blurRadius: 4,
-                                          ),
-                                          BoxShadow(
-                                            color: shadowLight.withValues(alpha: 0.7),
-                                            offset: const Offset(-2, -2),
-                                            blurRadius: 4,
-                                          ),
-                                        ],
+                                  boxShadow: isSelected ? [] : flatShadows,
                                 ),
                                 child: Text(
                                   tag,
@@ -420,7 +376,7 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                 padding: const EdgeInsets.all(14),
                 child: Row(
                   children: [
-                    const Text('🪞', style: TextStyle(fontSize: 20)),
+                    const EmojiWidget(emoji: '🪞', size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -457,20 +413,7 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                             decoration: BoxDecoration(
                               color: _isListeningJournal ? AppTheme.primaryTeal : inputBgColor,
                               shape: BoxShape.circle,
-                              boxShadow: _isListeningJournal
-                                  ? []
-                                  : [
-                                      BoxShadow(
-                                        color: shadowDark.withValues(alpha: 0.2),
-                                        offset: const Offset(2, 2),
-                                        blurRadius: 4,
-                                      ),
-                                      BoxShadow(
-                                        color: shadowLight.withValues(alpha: 0.7),
-                                        offset: const Offset(-2, -2),
-                                        blurRadius: 4,
-                                      ),
-                                    ],
+                              boxShadow: _isListeningJournal ? [] : flatShadows,
                             ),
                             child: Icon(
                               _isListeningJournal ? Icons.stop : Icons.mic,
@@ -494,18 +437,7 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                       decoration: BoxDecoration(
                         color: inputBgColor,
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: shadowDark.withValues(alpha: 0.2),
-                            offset: const Offset(2, 2),
-                            blurRadius: 4,
-                          ),
-                          BoxShadow(
-                            color: shadowLight.withValues(alpha: 0.7),
-                            offset: const Offset(-2, -2),
-                            blurRadius: 4,
-                          ),
-                        ],
+                        boxShadow: flatShadows,
                       ),
                       child: TextField(
                         controller: _journalController,

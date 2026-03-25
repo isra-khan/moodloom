@@ -4,12 +4,14 @@ import 'package:provider/provider.dart';
 import '../providers/mood_provider.dart';
 import '../services/mood_prediction_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/emoji_widget.dart';
 import 'breathing_screen.dart';
 import 'dream_journal_screen.dart';
 import 'mood_avatar_screen.dart';
 import 'mood_map_screen.dart';
 import 'mood_ripple_screen.dart';
 import 'time_capsule_screen.dart';
+import '../utils/page_transitions.dart';
 
 class DiscoverScreen extends StatelessWidget {
   const DiscoverScreen({super.key});
@@ -54,7 +56,7 @@ class DiscoverScreen extends StatelessWidget {
                 subtitle: 'A living tree that grows with your mood',
                 emoji: '🌳',
                 color: const Color(0xFF43A047),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MoodAvatarScreen())),
+                onTap: () => Navigator.push(context, smoothPageRoute(page: const MoodAvatarScreen())),
               ).animate(delay: 150.ms).fadeIn().slideY(begin: 0.1, end: 0),
               const SizedBox(height: 12),
 
@@ -63,7 +65,7 @@ class DiscoverScreen extends StatelessWidget {
                 subtitle: 'Guided breathing for calm & focus',
                 emoji: '🌊',
                 color: const Color(0xFF4DB6AC),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BreathingScreen())),
+                onTap: () => Navigator.push(context, smoothPageRoute(page: const BreathingScreen())),
               ).animate(delay: 150.ms).fadeIn().slideY(begin: 0.1, end: 0),
               const SizedBox(height: 12),
 
@@ -72,7 +74,7 @@ class DiscoverScreen extends StatelessWidget {
                 subtitle: 'Track dreams & sleep-mood correlation',
                 emoji: '🌙',
                 color: const Color(0xFF7E57C2),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DreamJournalScreen())),
+                onTap: () => Navigator.push(context, smoothPageRoute(page: const DreamJournalScreen())),
               ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.1, end: 0),
               const SizedBox(height: 12),
 
@@ -81,7 +83,7 @@ class DiscoverScreen extends StatelessWidget {
                 subtitle: 'Write letters to your future self',
                 emoji: '💌',
                 color: const Color(0xFFE91E63),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TimeCapsuleScreen())),
+                onTap: () => Navigator.push(context, smoothPageRoute(page: const TimeCapsuleScreen())),
               ).animate(delay: 250.ms).fadeIn().slideY(begin: 0.1, end: 0),
               const SizedBox(height: 12),
 
@@ -90,7 +92,7 @@ class DiscoverScreen extends StatelessWidget {
                 subtitle: 'See how places affect your mood',
                 emoji: '📍',
                 color: const Color(0xFF42A5F5),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MoodMapScreen())),
+                onTap: () => Navigator.push(context, smoothPageRoute(page: const MoodMapScreen())),
               ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.1, end: 0),
               const SizedBox(height: 12),
 
@@ -99,7 +101,7 @@ class DiscoverScreen extends StatelessWidget {
                 subtitle: 'See how the world is feeling today',
                 emoji: '🌍',
                 color: const Color(0xFF26A69A),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MoodRippleScreen())),
+                onTap: () => Navigator.push(context, smoothPageRoute(page: const MoodRippleScreen())),
               ).animate(delay: 350.ms).fadeIn().slideY(begin: 0.1, end: 0),
 
               const SizedBox(height: 80),
@@ -125,7 +127,7 @@ class _ForecastCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(forecast.weatherIcon, style: const TextStyle(fontSize: 36)),
+              EmojiWidget(emoji: forecast.weatherIcon, size: 36),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -141,7 +143,7 @@ class _ForecastCard extends StatelessWidget {
               ),
               Column(
                 children: [
-                  Text(forecast.emoji, style: const TextStyle(fontSize: 28)),
+                  EmojiWidget(emoji: forecast.emoji, size: 28),
                   Text(
                     forecast.predictedMood.toStringAsFixed(1),
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textColor.withValues(alpha: 0.6)),
@@ -203,7 +205,7 @@ class _FeatureTile extends StatelessWidget {
               color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Center(child: Text(emoji, style: const TextStyle(fontSize: 24))),
+            child: Center(child: EmojiWidget(emoji: emoji, size: 24)),
           ),
           const SizedBox(width: 14),
           Expanded(

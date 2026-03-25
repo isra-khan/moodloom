@@ -3,11 +3,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../models/achievement.dart';
 import '../models/mood_entry.dart';
+import '../widgets/animated_fab.dart';
+import '../widgets/emoji_widget.dart';
 import '../providers/mood_provider.dart';
 import '../services/mood_pattern_service.dart';
 import '../services/mood_prediction_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/date_helpers.dart';
+import '../utils/page_transitions.dart';
 import '../utils/quotes.dart';
 import '../widgets/mood_entry_tile.dart';
 import 'breathing_screen.dart';
@@ -99,8 +102,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             NeuButton(
                               onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(
-                                  builder: (_) => const SearchScreen(),
+                                Navigator.push(context, smoothPageRoute(
+                                  page: const SearchScreen(),
                                 ));
                               },
                               borderRadius: 14,
@@ -116,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.all(14),
                           child: Row(
                             children: [
-                              const Text('💡', style: TextStyle(fontSize: 22)),
+                              const EmojiWidget(emoji: '💡', size: 22),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -213,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           final avatarState = MoodAvatarService.calculateState(mood.allEntries);
                           return GestureDetector(
                             onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const MoodAvatarScreen()));
+                              Navigator.push(context, smoothPageRoute(page: const MoodAvatarScreen()));
                             },
                             child: NeuBox(
                               child: Row(
@@ -271,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(forecast.weatherIcon, style: const TextStyle(fontSize: 32)),
+                                      EmojiWidget(emoji: forecast.weatherIcon, size: 32),
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Column(
@@ -284,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       Column(
                                         children: [
-                                          Text(forecast.emoji, style: const TextStyle(fontSize: 24)),
+                                          EmojiWidget(emoji: forecast.emoji, size: 24),
                                           Text(forecast.predictedMood.toStringAsFixed(1), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textColor.withValues(alpha: 0.5))),
                                         ],
                                       ),
@@ -318,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     padding: const EdgeInsets.all(14),
                                     child: Row(
                                       children: [
-                                        Text(alert.emoji, style: const TextStyle(fontSize: 20)),
+                                        EmojiWidget(emoji: alert.emoji, size: 20),
                                         const SizedBox(width: 10),
                                         Expanded(
                                           child: Column(
@@ -343,11 +346,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (mood.todayEntries.isNotEmpty && mood.todayEntries.last.moodLevel <= 2) ...[
                           NeuButton(
                             onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const BreathingScreen()));
+                              Navigator.push(context, smoothPageRoute(page: const BreathingScreen()));
                             },
                             child: Row(
                               children: [
-                                const Text('🌊', style: TextStyle(fontSize: 20)),
+                                const EmojiWidget(emoji: '🌊', size: 20),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
@@ -372,7 +375,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Row(
                                 children: [
-                                  const Text('🪞', style: TextStyle(fontSize: 20)),
+                                  const EmojiWidget(emoji: '🪞', size: 20),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Daily Reflection',
@@ -397,8 +400,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: double.infinity,
                                 child: NeuButton(
                                   onPressed: () {
-                                    Navigator.push(context, MaterialPageRoute(
-                                      builder: (_) => const LogMoodScreen(),
+                                    Navigator.push(context, smoothPageRoute(
+                                      page: const LogMoodScreen(),
                                     ));
                                   },
                                   child: const Text(
@@ -432,7 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: NeuBox(
                         child: Column(
                           children: [
-                            const Text('🌿', style: TextStyle(fontSize: 48)),
+                            const EmojiWidget(emoji: '🌿', size: 48),
                             const SizedBox(height: 12),
                             Text(
                               'No moods logged today',
@@ -464,8 +467,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: MoodEntryTile(
                             entry: entry,
                             onTap: () {
-                              Navigator.push(context, MaterialPageRoute(
-                                builder: (_) => JournalDetailScreen(entry: entry),
+                              Navigator.push(context, smoothPageRoute(
+                                page: JournalDetailScreen(entry: entry),
                               ));
                             },
                             onDelete: () => _confirmDelete(context, mood, entry.id),
@@ -483,30 +486,14 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
       ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: AppTheme.tealGradient,
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryTeal.withValues(alpha: 0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const LogMoodScreen()),
-            );
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(Icons.add, size: 30, color: Colors.white),
-        ),
-      ).animate().scale(delay: 500.ms, duration: 400.ms, curve: Curves.elasticOut),
+      floatingActionButton: AnimatedFab(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            smoothPageRoute(page: const LogMoodScreen()),
+          );
+        },
+      ),
     );
   }
 
@@ -548,7 +535,7 @@ class _QuickMoodRow extends StatelessWidget {
           child: NeuBox(
             borderRadius: 16,
             padding: const EdgeInsets.all(12),
-            child: Text(MoodEntry.moodEmojis[level]!, style: const TextStyle(fontSize: 28)),
+            child: EmojiWidget(emoji: MoodEntry.moodEmojis[level]!, size: 28),
           ),
         );
       }).animate(interval: 60.ms).fadeIn().scale(begin: const Offset(0.8, 0.8)),
@@ -668,7 +655,7 @@ class _AchievementsRow extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(a.emoji, style: const TextStyle(fontSize: 28)),
+                    EmojiWidget(emoji: a.emoji, size: 28),
                     const SizedBox(height: 4),
                     Text(
                       a.title,

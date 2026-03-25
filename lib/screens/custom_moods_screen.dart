@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
+import '../widgets/emoji_widget.dart';
 
 class CustomMoodsScreen extends StatefulWidget {
   const CustomMoodsScreen({super.key});
@@ -121,7 +122,7 @@ class _CustomMoodsScreenState extends State<CustomMoodsScreen> {
                   child: NeuBox(
                     child: Row(
                       children: [
-                        Text(emojis[level]!, style: const TextStyle(fontSize: 36)),
+                        EmojiWidget(emoji: emojis[level]!, size: 36),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(

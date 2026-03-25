@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/mood_provider.dart';
 import '../services/mood_avatar_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/emoji_widget.dart';
 import '../widgets/mood_tree_painter.dart';
 
 class MoodAvatarScreen extends StatelessWidget {
@@ -73,7 +74,7 @@ class MoodAvatarScreen extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            const Text('🌡️', style: TextStyle(fontSize: 18)),
+                            const EmojiWidget(emoji: '🌡️', size: 18),
                             const SizedBox(width: 8),
                             Text('Tree Health', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textColor)),
                             const Spacer(),
@@ -131,7 +132,7 @@ class MoodAvatarScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         child: Row(
                           children: [
-                            Text(m.emoji, style: const TextStyle(fontSize: 22)),
+                            EmojiWidget(emoji: m.emoji, size: 22),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -185,7 +186,7 @@ class MoodAvatarScreen extends StatelessWidget {
   Widget _miniStat(String emoji, String label, String value, Color textColor) {
     return Column(
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 16)),
+        EmojiWidget(emoji: emoji, size: 16),
         const SizedBox(height: 2),
         Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textColor)),
         Text(label, style: TextStyle(fontSize: 10, color: textColor.withValues(alpha: 0.5))),
@@ -210,7 +211,7 @@ class MoodAvatarScreen extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(emoji, style: TextStyle(fontSize: 14, color: active ? null : Colors.grey)),
+              EmojiWidget(emoji: emoji, size: 14),
               const SizedBox(width: 4),
               Text(
                 label,
@@ -249,7 +250,7 @@ class MoodAvatarScreen extends StatelessWidget {
             intensity: 0.4,
             child: Row(
               children: [
-                Text(emoji, style: TextStyle(fontSize: 22, color: Colors.grey.withValues(alpha: 0.5))),
+                EmojiWidget(emoji: emoji, size: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

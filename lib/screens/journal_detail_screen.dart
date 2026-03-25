@@ -6,6 +6,7 @@ import '../providers/mood_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/date_helpers.dart';
 import '../utils/mood_colors.dart';
+import '../widgets/emoji_widget.dart';
 
 class JournalDetailScreen extends StatefulWidget {
   final MoodEntry entry;
@@ -79,20 +80,23 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              MoodColors.getColor(widget.entry.moodLevel).withValues(alpha: 0.3),
-                              MoodColors.getColor(widget.entry.moodLevel).withValues(alpha: 0.1),
-                            ],
+                      Hero(
+                        tag: 'mood_emoji_${widget.entry.id}',
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                MoodColors.getColor(widget.entry.moodLevel).withValues(alpha: 0.3),
+                                MoodColors.getColor(widget.entry.moodLevel).withValues(alpha: 0.1),
+                              ],
+                            ),
                           ),
-                        ),
-                        child: Center(
-                          child: Text(widget.entry.emoji, style: const TextStyle(fontSize: 42)),
+                          child: Center(
+                            child: EmojiWidget(emoji: widget.entry.emoji, size: 42),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),

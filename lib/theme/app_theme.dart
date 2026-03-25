@@ -100,8 +100,6 @@ class NeuBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppTheme.darkCard : AppTheme.surfaceColor;
-    final shadowL = isDark ? AppTheme.darkShadowLight : AppTheme.shadowLight;
-    final shadowD = isDark ? AppTheme.darkShadowDark : AppTheme.shadowDark;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -109,35 +107,18 @@ class NeuBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: isPressed
-            ? [
-                BoxShadow(
-                  color: shadowD.withValues(alpha: 0.3 * intensity),
-                  offset: const Offset(2, 2),
-                  blurRadius: 5,
-                  spreadRadius: 1,
-                ),
-                BoxShadow(
-                  color: shadowL.withValues(alpha: 0.7 * intensity),
-                  offset: const Offset(-2, -2),
-                  blurRadius: 5,
-                  spreadRadius: 1,
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: shadowD.withValues(alpha: 0.4 * intensity),
-                  offset: const Offset(6, 6),
-                  blurRadius: 15,
-                  spreadRadius: 1,
-                ),
-                BoxShadow(
-                  color: shadowL.withValues(alpha: isDark ? 0.3 : 0.9 * intensity),
-                  offset: const Offset(-6, -6),
-                  blurRadius: 15,
-                  spreadRadius: 1,
-                ),
-              ],
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.06)
+              : Colors.black.withValues(alpha: 0.06),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
+            offset: Offset(0, isPressed ? 1 : 2),
+            blurRadius: isPressed ? 4 : 8,
+          ),
+        ],
       ),
       child: child,
     );
@@ -162,23 +143,55 @@ class NeuButton extends StatefulWidget {
   State<NeuButton> createState() => _NeuButtonState();
 }
 
-class _NeuButtonState extends State<NeuButton> {
+class _NeuButtonState extends State<NeuButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
   bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+      reverseDuration: const Duration(milliseconds: 200),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapDown: (_) {
+        setState(() => _isPressed = true);
+        _controller.forward();
+      },
       onTapUp: (_) {
         setState(() => _isPressed = false);
+        _controller.reverse();
         widget.onPressed();
       },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: NeuBox(
-        isPressed: _isPressed,
-        borderRadius: widget.borderRadius,
-        padding: widget.padding,
-        child: widget.child,
+      onTapCancel: () {
+        setState(() => _isPressed = false);
+        _controller.reverse();
+      },
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: NeuBox(
+          isPressed: _isPressed,
+          borderRadius: widget.borderRadius,
+          padding: widget.padding,
+          child: widget.child,
+        ),
       ),
     );
   }

@@ -9,6 +9,8 @@ import '../services/speech_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/date_helpers.dart';
 import '../utils/id_generator.dart';
+import '../widgets/animated_fab.dart';
+import '../widgets/emoji_widget.dart';
 
 class DreamJournalScreen extends StatefulWidget {
   const DreamJournalScreen({super.key});
@@ -102,21 +104,7 @@ class _DreamJournalScreenState extends State<DreamJournalScreen> {
           ],
         ),
       ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: AppTheme.tealGradient,
-          boxShadow: [
-            BoxShadow(color: AppTheme.primaryTeal.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: _showAddDream,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(Icons.add, size: 30, color: Colors.white),
-        ),
-      ),
+      floatingActionButton: AnimatedFab(onPressed: _showAddDream),
     );
   }
 
@@ -128,7 +116,7 @@ class _DreamJournalScreenState extends State<DreamJournalScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🌙', style: TextStyle(fontSize: 48)),
+              const EmojiWidget(emoji: '🌙', size: 48),
               const SizedBox(height: 12),
               Text('No dreams logged yet', style: TextStyle(fontSize: 16, color: textColor.withValues(alpha: 0.6))),
               const SizedBox(height: 4),
@@ -176,7 +164,7 @@ class _DreamJournalScreenState extends State<DreamJournalScreen> {
         children: [
           Row(
             children: [
-              const Text('📊', style: TextStyle(fontSize: 18)),
+              const EmojiWidget(emoji: '📊', size: 18),
               const SizedBox(width: 8),
               Text('Sleep → Mood Correlation', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor)),
             ],
@@ -264,7 +252,7 @@ class _DreamJournalScreenState extends State<DreamJournalScreen> {
                             ),
                             child: Column(
                               children: [
-                                Text(DreamEntry.sleepEmojis[level]!, style: const TextStyle(fontSize: 24)),
+                                EmojiWidget(emoji: DreamEntry.sleepEmojis[level]!, size: 24),
                                 const SizedBox(height: 2),
                                 Text(
                                   DreamEntry.sleepLabels[level]!,
@@ -418,7 +406,7 @@ class _DreamTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(dream.sleepEmoji, style: const TextStyle(fontSize: 24)),
+              EmojiWidget(emoji: dream.sleepEmoji, size: 24),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -435,7 +423,7 @@ class _DreamTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (dream.remembered) const Text('💭', style: TextStyle(fontSize: 16)),
+              if (dream.remembered) const EmojiWidget(emoji: '💭', size: 16),
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: onDelete,

@@ -9,6 +9,8 @@ import '../services/speech_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/date_helpers.dart';
 import '../utils/id_generator.dart';
+import '../widgets/animated_fab.dart';
+import '../widgets/emoji_widget.dart';
 
 class TimeCapsuleScreen extends StatefulWidget {
   const TimeCapsuleScreen({super.key});
@@ -98,21 +100,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
           ],
         ),
       ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: AppTheme.tealGradient,
-          boxShadow: [
-            BoxShadow(color: AppTheme.primaryTeal.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: _showCreateCapsule,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(Icons.add, size: 30, color: Colors.white),
-        ),
-      ),
+      floatingActionButton: AnimatedFab(onPressed: _showCreateCapsule),
     );
   }
 
@@ -130,7 +118,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('💌', style: TextStyle(fontSize: 48)),
+              const EmojiWidget(emoji: '💌', size: 48),
               const SizedBox(height: 12),
               Text('No time capsules yet', style: TextStyle(fontSize: 16, color: textColor.withValues(alpha: 0.6))),
               const SizedBox(height: 4),
@@ -189,7 +177,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: isSelected ? AppTheme.primaryTeal : textColor.withValues(alpha: 0.2)),
                             ),
-                            child: Text(MoodEntry.moodEmojis[level]!, style: const TextStyle(fontSize: 28)),
+                            child: EmojiWidget(emoji: MoodEntry.moodEmojis[level]!, size: 28),
                           ),
                         );
                       }),
@@ -340,7 +328,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Text('💌 ', style: TextStyle(fontSize: 24)),
+            const EmojiWidget(emoji: '💌', size: 24),
             Text('Time Capsule Opened!', style: TextStyle(fontSize: 18, color: textColor)),
           ],
         ),
@@ -413,9 +401,9 @@ class _CapsuleTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                isUnlocked ? (capsule.isOpened ? '💌' : '🔓') : '🔒',
-                style: const TextStyle(fontSize: 24),
+              EmojiWidget(
+                emoji: isUnlocked ? (capsule.isOpened ? '💌' : '🔓') : '🔒',
+                size: 24,
               ),
               const SizedBox(width: 10),
               Expanded(

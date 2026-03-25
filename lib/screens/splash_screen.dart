@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
+import '../widgets/emoji_widget.dart';
 import 'shell_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -53,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   ],
                 ),
                 child: const Center(
-                  child: Text('🌿', style: TextStyle(fontSize: 56)),
+                  child: EmojiWidget(emoji: '🌿', size: 56),
                 ),
               )
                   .animate()

@@ -5,6 +5,7 @@ import '../models/mood_entry.dart';
 import '../providers/mood_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/mood_colors.dart';
+import '../widgets/emoji_widget.dart';
 
 class MoodMapScreen extends StatelessWidget {
   const MoodMapScreen({super.key});
@@ -82,7 +83,7 @@ class MoodMapScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('📍', style: TextStyle(fontSize: 48)),
+              const EmojiWidget(emoji: '📍', size: 48),
               const SizedBox(height: 12),
               Text('No location data yet', style: TextStyle(fontSize: 16, color: textColor.withValues(alpha: 0.6))),
               const SizedBox(height: 4),
@@ -122,7 +123,7 @@ class MoodMapScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text('🗺️', style: TextStyle(fontSize: 18)),
+              const EmojiWidget(emoji: '🗺️', size: 18),
               const SizedBox(width: 8),
               Text('Location Insights', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textColor)),
             ],
@@ -151,7 +152,7 @@ class MoodMapScreen extends StatelessWidget {
         Expanded(
           child: Text(place, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textColor), overflow: TextOverflow.ellipsis),
         ),
-        Text(MoodEntry.moodEmojis[avg.round()] ?? '😐', style: const TextStyle(fontSize: 16)),
+        EmojiWidget(emoji: MoodEntry.moodEmojis[avg.round()] ?? '😐', size: 16),
         const SizedBox(width: 4),
         Text(avg.toStringAsFixed(1), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textColor.withValues(alpha: 0.6))),
       ],
@@ -184,7 +185,7 @@ class MoodMapScreen extends StatelessWidget {
                   color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Center(child: Text(MoodEntry.moodEmojis[avg.round()] ?? '😐', style: const TextStyle(fontSize: 22))),
+                child: Center(child: EmojiWidget(emoji: MoodEntry.moodEmojis[avg.round()] ?? '😐', size: 22)),
               ),
               const SizedBox(width: 12),
               Expanded(

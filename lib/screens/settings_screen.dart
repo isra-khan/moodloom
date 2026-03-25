@@ -9,6 +9,8 @@ import '../services/export_service.dart';
 import '../services/notification_service.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/page_transitions.dart';
+import '../widgets/emoji_widget.dart';
 import 'custom_moods_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -100,8 +102,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // Custom Mood Scale
               NeuButton(
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => const CustomMoodsScreen(),
+                  Navigator.push(context, smoothPageRoute(
+                    page: const CustomMoodsScreen(),
                   ));
                 },
                 child: Row(
@@ -416,7 +418,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: NeuBox(
                   child: Column(
                     children: [
-                      const Text('🌿', style: TextStyle(fontSize: 36)),
+                      const EmojiWidget(emoji: '🌿', size: 36),
                       const SizedBox(height: 8),
                       Text('MoodLoom', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
                       const SizedBox(height: 4),

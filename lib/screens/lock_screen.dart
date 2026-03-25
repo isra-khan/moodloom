@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../services/app_lock_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/emoji_widget.dart';
 
 class LockScreen extends StatefulWidget {
   final VoidCallback onUnlocked;
@@ -56,7 +57,7 @@ class _LockScreenState extends State<LockScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('🌿', style: TextStyle(fontSize: 56))
+                const EmojiWidget(emoji: '🌿', size: 56)
                     .animate()
                     .fadeIn()
                     .scale(begin: const Offset(0.5, 0.5), curve: Curves.elasticOut),

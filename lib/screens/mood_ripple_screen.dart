@@ -5,6 +5,7 @@ import '../models/mood_entry.dart';
 import '../providers/mood_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/mood_colors.dart';
+import '../widgets/emoji_widget.dart';
 
 class MoodRippleScreen extends StatefulWidget {
   const MoodRippleScreen({super.key});
@@ -101,7 +102,7 @@ class _MoodRippleScreenState extends State<MoodRippleScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         child: Row(
                           children: [
-                            Text(MoodEntry.moodEmojis[level]!, style: const TextStyle(fontSize: 22)),
+                            EmojiWidget(emoji: MoodEntry.moodEmojis[level]!, size: 22),
                             const SizedBox(width: 10),
                             Expanded(
                               child: ClipRRect(
@@ -135,7 +136,7 @@ class _MoodRippleScreenState extends State<MoodRippleScreen> {
                 NeuBox(
                   child: Row(
                     children: [
-                      Text(_hasContributed ? '✅' : '💤', style: const TextStyle(fontSize: 20)),
+                      EmojiWidget(emoji: _hasContributed ? '✅' : '💤', size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -166,7 +167,7 @@ class _MoodRippleScreenState extends State<MoodRippleScreen> {
                   padding: const EdgeInsets.all(14),
                   child: Row(
                     children: [
-                      const Text('💡', style: TextStyle(fontSize: 18)),
+                      const EmojiWidget(emoji: '💡', size: 18),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -236,7 +237,7 @@ class _MoodRippleScreenState extends State<MoodRippleScreen> {
                     color: color.withValues(alpha: 0.2),
                   ),
                   child: Center(
-                    child: Text(MoodEntry.moodEmojis[dominantMood]!, style: const TextStyle(fontSize: 36)),
+                    child: EmojiWidget(emoji: MoodEntry.moodEmojis[dominantMood]!, size: 36),
                   ),
                 ),
               ],

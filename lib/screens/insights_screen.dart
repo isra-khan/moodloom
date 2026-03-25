@@ -7,6 +7,7 @@ import '../providers/mood_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/date_helpers.dart';
 import '../utils/mood_colors.dart';
+import '../widgets/emoji_widget.dart';
 
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
@@ -32,7 +33,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('📊', style: TextStyle(fontSize: 48)),
+                      const EmojiWidget(emoji: '📊', size: 48),
                       const SizedBox(height: 12),
                       Text('No data yet', style: TextStyle(fontSize: 18, color: textColor.withValues(alpha: 0.6))),
                       const SizedBox(height: 4),
@@ -343,7 +344,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(MoodEntry.moodEmojis[avg.round()] ?? '😐', style: const TextStyle(fontSize: 18)),
+                  EmojiWidget(emoji: MoodEntry.moodEmojis[avg.round()] ?? '😐', size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: ClipRRect(
@@ -385,7 +386,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
               children: [
-                Text(MoodEntry.moodEmojis[level]!, style: const TextStyle(fontSize: 24)),
+                EmojiWidget(emoji: MoodEntry.moodEmojis[level]!, size: 24),
                 const SizedBox(width: 12),
                 SizedBox(
                   width: 60,
@@ -431,7 +432,7 @@ class _InsightCard extends StatelessWidget {
       child: NeuBox(
         child: Column(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 28)),
+            EmojiWidget(emoji: emoji, size: 28),
             const SizedBox(height: 8),
             Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
             const SizedBox(height: 2),

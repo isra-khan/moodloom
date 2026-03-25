@@ -5,6 +5,7 @@ import '../providers/mood_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/date_helpers.dart';
 import '../utils/mood_colors.dart';
+import '../utils/page_transitions.dart';
 import '../widgets/mood_entry_tile.dart';
 import 'journal_detail_screen.dart';
 import 'mood_share_screen.dart';
@@ -235,8 +236,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
               NeuButton(
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => MoodShareScreen(entries: entries, date: _selectedDate!),
+                  Navigator.push(context, smoothPageRoute(
+                    page: MoodShareScreen(entries: entries, date: _selectedDate!),
                   ));
                 },
                 borderRadius: 12,
@@ -256,8 +257,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 child: MoodEntryTile(
                   entry: entries[index],
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => JournalDetailScreen(entry: entries[index]),
+                    Navigator.push(context, smoothPageRoute(
+                      page: JournalDetailScreen(entry: entries[index]),
                     ));
                   },
                 ).animate(delay: Duration(milliseconds: index * 60))
