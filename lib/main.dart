@@ -4,13 +4,12 @@ import 'providers/mood_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/tag_provider.dart';
 import 'services/app_lock_service.dart';
-import 'services/auth_service.dart';
 import 'services/database_service.dart';
 import 'services/notification_service.dart';
 import 'services/supabase_service.dart';
 import 'services/sync_service.dart';
-import 'screens/auth/login_screen.dart';
 import 'screens/lock_screen.dart';
+import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -22,7 +21,6 @@ void main() async {
 
   final dbService = DatabaseService();
   final syncService = SyncService(dbService);
-  await syncService.initialize();
 
   final lockEnabled = await AppLockService.isEnabled();
 
@@ -53,6 +51,7 @@ class MoodLoomApp extends StatelessWidget {
           create: (_) => SettingsProvider()..loadSettings(),
         ),
         ChangeNotifierProvider(
+          lazy: false,
           create: (_) => MoodProvider(dbService, syncService),
         ),
         ChangeNotifierProvider(
@@ -67,7 +66,10 @@ class MoodLoomApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-            home: _AppEntry(lockEnabled: lockEnabled),
+            home: _AppEntry(
+              lockEnabled: lockEnabled,
+              syncService: syncService,
+            ),
           );
         },
       ),
@@ -77,7 +79,8 @@ class MoodLoomApp extends StatelessWidget {
 
 class _AppEntry extends StatefulWidget {
   final bool lockEnabled;
-  const _AppEntry({required this.lockEnabled});
+  final SyncService syncService;
+  const _AppEntry({required this.lockEnabled, required this.syncService});
 
   @override
   State<_AppEntry> createState() => _AppEntryState();
@@ -85,24 +88,20 @@ class _AppEntry extends StatefulWidget {
 
 class _AppEntryState extends State<_AppEntry> {
   bool _pinUnlocked = false;
-  bool _authChecked = false;
-  bool _isLoggedIn = false;
 
   @override
   void initState() {
     super.initState();
     _pinUnlocked = !widget.lockEnabled;
-    _checkAuth();
-  }
-
-  void _checkAuth() {
-    _isLoggedIn = AuthService.isLoggedIn;
-    _authChecked = true;
-    if (mounted) setState(() {});
+    // Initialize sync after providers are built so MoodProvider catches the
+    // initialSession event and refreshes when a stored session signs in.
+    widget.syncService.initialize();
   }
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+
     // Step 1: PIN lock
     if (!_pinUnlocked) {
       return LockScreen(
@@ -110,22 +109,20 @@ class _AppEntryState extends State<_AppEntry> {
       );
     }
 
-    // Step 2: Auth check
-    if (!_authChecked) {
+    // Step 2: Wait for SharedPreferences (dark mode + onboarding flag)
+    if (!settings.settingsLoaded) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator(color: AppTheme.primaryTeal)),
       );
     }
 
-    // Step 3: Login or Splash
-    if (!_isLoggedIn && SupabaseService.isInitialized) {
-      return LoginScreen(
-        onLoginSuccess: () => setState(() {
-          _isLoggedIn = true;
-        }),
-      );
+    // Step 3: First-launch onboarding
+    if (!settings.hasSeenOnboarding) {
+      return const OnboardingScreen();
     }
 
+    // Step 4: Straight to the app. No mandatory login — guests land on Home.
+    // Discover and Settings tabs handle their own sign-in gates.
     return const SplashScreen();
   }
 }

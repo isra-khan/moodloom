@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primaryTeal = Color(0xFF008080);
-  static const Color lightTeal = Color(0xFF4DB6AC);
-  static const Color darkTeal = Color(0xFF00695C);
-  static const Color accentTeal = Color(0xFF80CBC4);
-  static const Color surfaceColor = Color(0xFFE8F0F0);
-  static const Color darkSurface = Color(0xFFD0DEDE);
+  // Hot Pink / Magenta palette
+  // (Names kept as *Teal for backwards compatibility with existing references.)
+  static const Color primaryTeal = Color(0xFFD63384);
+  static const Color lightTeal = Color(0xFFE872AB);
+  static const Color darkTeal = Color(0xFF8E1F58);
+  static const Color accentTeal = Color(0xFFF5C2DC);
+  static const Color surfaceColor = Color(0xFFFAF0F5);
+  static const Color darkSurface = Color(0xFFEFD4E1);
   static const Color white = Colors.white;
   static const Color shadowLight = Color(0xFFFFFFFF);
-  static const Color shadowDark = Color(0xFFB0C4C4);
+  static const Color shadowDark = Color(0xFFD0A8BC);
 
   // Dark mode colors
-  static const Color darkBg = Color(0xFF1A2E2E);
-  static const Color darkCard = Color(0xFF243B3B);
-  static const Color darkShadowLight = Color(0xFF2D4A4A);
-  static const Color darkShadowDark = Color(0xFF0F1E1E);
-  static const Color darkText = Color(0xFFE0F2F1);
+  static const Color darkBg = Color(0xFF24121C);
+  static const Color darkCard = Color(0xFF351B2A);
+  static const Color darkShadowLight = Color(0xFF482638);
+  static const Color darkShadowDark = Color(0xFF160910);
+  static const Color darkText = Color(0xFFF5DEEB);
 
   static const LinearGradient tealGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -27,7 +29,7 @@ class AppTheme {
   static const LinearGradient softGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFE0F2F1), Color(0xFFB2DFDB)],
+    colors: [Color(0xFFFBE5EF), Color(0xFFF5C2DC)],
   );
 
   static ThemeData get lightTheme => ThemeData(

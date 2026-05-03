@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/mood_entry.dart';
 import '../services/database_service.dart';
@@ -8,13 +9,25 @@ import '../utils/id_generator.dart';
 class MoodProvider extends ChangeNotifier {
   final DatabaseService _db;
   final SyncService _sync;
+  StreamSubscription? _resetSub;
 
   List<MoodEntry> _allEntries = [];
   List<MoodEntry> _todayEntries = [];
   List<MoodEntry> _filteredEntries = [];
   bool _isLoading = false;
 
-  MoodProvider(this._db, this._sync);
+  MoodProvider(this._db, this._sync) {
+    _resetSub = _sync.onLocalDataReset.listen((_) {
+      loadAllEntries();
+      loadTodayEntries();
+    });
+  }
+
+  @override
+  void dispose() {
+    _resetSub?.cancel();
+    super.dispose();
+  }
 
   List<MoodEntry> get allEntries => _allEntries;
   List<MoodEntry> get todayEntries => _todayEntries;

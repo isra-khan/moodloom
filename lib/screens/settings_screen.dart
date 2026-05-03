@@ -11,6 +11,7 @@ import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/page_transitions.dart';
 import '../widgets/emoji_widget.dart';
+import '../widgets/sign_in_gate.dart';
 import 'custom_moods_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -44,8 +45,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _setupReminder(TimeOfDay time) async {
+    final status = await NotificationService.requestPermissions();
+    if (!mounted) return;
+
+    if (!status.notificationsGranted) {
+      setState(() => _reminderEnabled = false);
+      _showSnack(
+        'Notifications are blocked. Enable them in app settings to receive reminders.',
+      );
+      return;
+    }
+
+    final scheduled = await NotificationService.scheduleDailyReminder(
+      time,
+      exactAlarmGranted: status.exactAlarmGranted,
+    );
+    if (!mounted) return;
+
+    if (!scheduled) {
+      setState(() => _reminderEnabled = false);
+      _showSnack("Couldn't schedule reminder. Try again.");
+      return;
+    }
+
+    if (!status.exactAlarmGranted) {
+      _showSnack(
+        'Reminder set for ${time.format(context)} — but exact alarms are off, '
+        'so it may arrive a few minutes late.',
+      );
+    } else {
+      _showSnack('Reminder set for ${time.format(context)} ✓');
+    }
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppTheme.darkTeal,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!AuthService.isLoggedIn) {
+      return SignInGate(
+        title: 'Settings is for members',
+        subtitle: 'Sign in to manage your account, sync your data, and personalize your experience.',
+        emoji: '⚙️',
+        onSignedIn: () {
+          if (mounted) setState(() {}); // Re-check auth after returning
+        },
+      );
+    }
+
     final textColor = Theme.of(context).colorScheme.onSurface;
 
     return Scaffold(
@@ -206,8 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           onChanged: (value) async {
                             setState(() => _reminderEnabled = value);
                             if (value) {
-                              await NotificationService.requestPermissions();
-                              await NotificationService.scheduleDailyReminder(_reminderTime);
+                              await _setupReminder(_reminderTime);
                             } else {
                               await NotificationService.cancelReminder();
                             }
@@ -225,7 +281,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           );
                           if (time != null) {
                             setState(() => _reminderTime = time);
-                            await NotificationService.scheduleDailyReminder(time);
+                            await _setupReminder(time);
                           }
                         },
                         child: Container(

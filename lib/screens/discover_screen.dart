@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../providers/mood_provider.dart';
+import '../services/auth_service.dart';
 import '../services/mood_prediction_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/emoji_widget.dart';
+import '../widgets/sign_in_gate.dart';
 import 'breathing_screen.dart';
 import 'dream_journal_screen.dart';
 import 'mood_avatar_screen.dart';
@@ -13,11 +15,30 @@ import 'mood_ripple_screen.dart';
 import 'time_capsule_screen.dart';
 import '../utils/page_transitions.dart';
 
-class DiscoverScreen extends StatelessWidget {
+class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
 
   @override
+  State<DiscoverScreen> createState() => _DiscoverScreenState();
+}
+
+class _DiscoverScreenState extends State<DiscoverScreen> {
+  @override
   Widget build(BuildContext context) {
+    if (!AuthService.isLoggedIn) {
+      return SignInGate(
+        title: 'Discover is for members',
+        subtitle: 'Sign in to unlock your mood tree, breathing exercises, dream journal, time capsule, and more.',
+        emoji: '✨',
+        onSignedIn: () {
+          if (mounted) setState(() {}); // Re-check auth after returning
+        },
+      );
+    }
+    return _buildDiscoverContent(context);
+  }
+
+  Widget _buildDiscoverContent(BuildContext context) {
     final textColor = Theme.of(context).colorScheme.onSurface;
 
     return Scaffold(

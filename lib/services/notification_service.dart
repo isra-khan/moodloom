@@ -5,6 +5,18 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:flutter_timezone/flutter_timezone.dart';
 
+class NotificationPermissionStatus {
+  final bool notificationsGranted;
+  final bool exactAlarmGranted;
+
+  const NotificationPermissionStatus({
+    required this.notificationsGranted,
+    required this.exactAlarmGranted,
+  });
+
+  bool get isFullyGranted => notificationsGranted && exactAlarmGranted;
+}
+
 class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
@@ -14,7 +26,7 @@ class NotificationService {
     final timeZoneName = await FlutterTimezone.getLocalTimezone();
     tz.setLocalLocation(tz.getLocation(timeZoneName));
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings('ic_notification');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -29,17 +41,42 @@ class NotificationService {
     _initialized = true;
   }
 
-  static Future<void> requestPermissions() async {
-    await _plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
-    await _plugin
-        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(alert: true, badge: true, sound: true);
+  /// Requests notification + exact-alarm permissions and reports what was granted.
+  /// On Android 13+ shows the POST_NOTIFICATIONS dialog; on Android 12+ also
+  /// triggers the SCHEDULE_EXACT_ALARM permission flow (system dialog or
+  /// settings page depending on OS version). On iOS requests alert/badge/sound.
+  static Future<NotificationPermissionStatus> requestPermissions() async {
+    final androidImpl = _plugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final iosImpl = _plugin
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+
+    bool notifications = true;
+    bool exactAlarm = true;
+
+    if (androidImpl != null) {
+      notifications = await androidImpl.requestNotificationsPermission() ?? false;
+      exactAlarm = await androidImpl.requestExactAlarmsPermission() ?? false;
+    }
+
+    if (iosImpl != null) {
+      final granted = await iosImpl.requestPermissions(alert: true, badge: true, sound: true);
+      notifications = granted ?? false;
+      // iOS doesn't have a separate exact-alarm permission.
+      exactAlarm = notifications;
+    }
+
+    return NotificationPermissionStatus(
+      notificationsGranted: notifications,
+      exactAlarmGranted: exactAlarm,
+    );
   }
 
-  static Future<void> scheduleDailyReminder(TimeOfDay time) async {
-    if (!_initialized) return;
+  /// Schedules the daily reminder. Uses exact alarms when permitted; falls back
+  /// to inexact (which Android may delay 15+ min) when the user has denied
+  /// the exact-alarm permission. Returns true if scheduling succeeded.
+  static Future<bool> scheduleDailyReminder(TimeOfDay time, {bool exactAlarmGranted = true}) async {
+    if (!_initialized) return false;
     await cancelReminder();
 
     final now = tz.TZDateTime.now(tz.local);
@@ -55,31 +92,45 @@ class NotificationService {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 
-    await _plugin.zonedSchedule(
-      0,
-      'MoodLoom',
-      'How are you feeling right now? Take a moment to log your mood 🌿',
-      scheduledDate,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'mood_reminder',
-          'Mood Reminders',
-          channelDescription: 'Daily reminders to log your mood',
-          importance: Importance.high,
-          priority: Priority.high,
+    try {
+      await _plugin.zonedSchedule(
+        0,
+        'MoodLoom',
+        'How are you feeling right now? Take a moment to log your mood 🌿',
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'mood_reminder',
+            'Mood Reminders',
+            channelDescription: 'Daily reminders to log your mood',
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: 'ic_notification',
+            color: Color(0xFFD63384),
+          ),
+          iOS: DarwinNotificationDetails(),
         ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
+        androidScheduleMode: exactAlarmGranted
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    } catch (_) {
+      return false;
+    }
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('reminder_enabled', true);
     await prefs.setInt('reminder_hour', time.hour);
     await prefs.setInt('reminder_minute', time.minute);
+    return true;
+  }
+
+  /// Debug helper — returns the list of pending scheduled notifications.
+  static Future<List<PendingNotificationRequest>> pendingNotifications() {
+    return _plugin.pendingNotificationRequests();
   }
 
   static Future<void> cancelReminder() async {

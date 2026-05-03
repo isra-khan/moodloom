@@ -20,7 +20,7 @@ class LogMoodScreen extends StatefulWidget {
   State<LogMoodScreen> createState() => _LogMoodScreenState();
 }
 
-class _LogMoodScreenState extends State<LogMoodScreen> {
+class _LogMoodScreenState extends State<LogMoodScreen> with WidgetsBindingObserver {
   int? _selectedMood;
   final _noteController = TextEditingController();
   final _journalController = TextEditingController();
@@ -35,14 +35,52 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
   bool _locationEnabled = false;
   LocationResult? _location;
   bool _isFetchingLocation = false;
+  bool _pendingLocationRetry = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _noteController.dispose();
     _journalController.dispose();
     _tagController.dispose();
     _faceMoodService.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _pendingLocationRetry) {
+      _pendingLocationRetry = false;
+      _enableLocation();
+    }
+  }
+
+  Future<void> _enableLocation() async {
+    setState(() {
+      _locationEnabled = true;
+      _isFetchingLocation = true;
+    });
+    final result = await LocationService.getCurrentLocation();
+    if (!mounted) return;
+    setState(() {
+      _location = result.location;
+      _isFetchingLocation = false;
+      if (!result.isSuccess) _locationEnabled = false;
+    });
+    if (!result.isSuccess) {
+      final f = result.failure!;
+      // If user is being sent to settings to fix it, queue an auto-retry on resume.
+      if (f == LocationFailure.serviceDisabled || f == LocationFailure.permissionForever) {
+        _pendingLocationRetry = true;
+      }
+      _showLocationFailure(f);
+    }
   }
 
   @override
@@ -346,23 +384,18 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
                     ),
                     Switch(
                       value: _locationEnabled,
-                      activeThumbColor: AppTheme.primaryTeal,
+                      thumbColor: const WidgetStatePropertyAll(AppTheme.primaryTeal),
                       activeTrackColor: AppTheme.primaryTeal.withValues(alpha: 0.3),
                       trackOutlineColor: WidgetStatePropertyAll(Colors.transparent),
-                      onChanged: (value) async {
-                        setState(() => _locationEnabled = value);
+                      onChanged: (value) {
                         if (value) {
-                          setState(() => _isFetchingLocation = true);
-                          final loc = await LocationService.getCurrentLocation();
-                          if (mounted) {
-                            setState(() {
-                              _location = loc;
-                              _isFetchingLocation = false;
-                              if (loc == null) _locationEnabled = false;
-                            });
-                          }
+                          _enableLocation();
                         } else {
-                          setState(() => _location = null);
+                          _pendingLocationRetry = false;
+                          setState(() {
+                            _locationEnabled = false;
+                            _location = null;
+                          });
                         }
                       },
                     ),
@@ -650,5 +683,45 @@ class _LogMoodScreenState extends State<LogMoodScreen> {
         );
 
     Navigator.pop(context);
+  }
+
+  void _showLocationFailure(LocationFailure failure) {
+    String message;
+    SnackBarAction? action;
+
+    switch (failure) {
+      case LocationFailure.serviceDisabled:
+        message = 'Location is turned off on your device. Enable it to track location.';
+        action = SnackBarAction(
+          label: 'Open',
+          textColor: Colors.white,
+          onPressed: LocationService.openLocationSettings,
+        );
+        break;
+      case LocationFailure.permissionDenied:
+        message = 'Location permission denied. Tap the toggle again to retry.';
+        break;
+      case LocationFailure.permissionForever:
+        message = 'Location permission was permanently denied. Enable it in app settings.';
+        action = SnackBarAction(
+          label: 'Settings',
+          textColor: Colors.white,
+          onPressed: LocationService.openAppSettings,
+        );
+        break;
+      case LocationFailure.fetchFailed:
+        message = "Couldn't get your location. Try again in a moment.";
+        break;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppTheme.darkTeal,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        action: action,
+      ),
+    );
   }
 }

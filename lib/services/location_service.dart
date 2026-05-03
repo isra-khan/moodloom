@@ -20,25 +20,51 @@ class LocationResult {
   }
 }
 
-class LocationService {
-  static Future<bool> checkPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return false;
+enum LocationFailure {
+  serviceDisabled,    // Device location services are off
+  permissionDenied,   // User denied this time (can ask again)
+  permissionForever,  // User permanently denied — must open settings
+  fetchFailed,        // Permission OK but getting position failed (timeout, etc.)
+}
 
-    LocationPermission permission = await Geolocator.checkPermission();
+class LocationFetchResult {
+  final LocationResult? location;
+  final LocationFailure? failure;
+
+  const LocationFetchResult.success(LocationResult this.location) : failure = null;
+  const LocationFetchResult.failed(LocationFailure this.failure) : location = null;
+
+  bool get isSuccess => location != null;
+}
+
+class LocationService {
+  /// Ensures location services are on and permission is granted.
+  /// Triggers the native permission dialog when not yet decided.
+  static Future<LocationFailure?> ensurePermission() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return LocationFailure.serviceDisabled;
+
+    var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return false;
     }
-    if (permission == LocationPermission.deniedForever) return false;
-    return true;
+    if (permission == LocationPermission.deniedForever) {
+      return LocationFailure.permissionForever;
+    }
+    if (permission == LocationPermission.denied) {
+      return LocationFailure.permissionDenied;
+    }
+    return null;
   }
 
-  static Future<LocationResult?> getCurrentLocation() async {
-    try {
-      final hasPermission = await checkPermission();
-      if (!hasPermission) return null;
+  static Future<void> openAppSettings() => Geolocator.openAppSettings();
+  static Future<void> openLocationSettings() => Geolocator.openLocationSettings();
 
+  static Future<LocationFetchResult> getCurrentLocation() async {
+    final permFailure = await ensurePermission();
+    if (permFailure != null) return LocationFetchResult.failed(permFailure);
+
+    try {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.low,
@@ -61,14 +87,14 @@ class LocationService {
         // Geocoding failed, use coordinates only
       }
 
-      return LocationResult(
+      return LocationFetchResult.success(LocationResult(
         latitude: position.latitude,
         longitude: position.longitude,
         city: city,
         area: area,
-      );
+      ));
     } catch (_) {
-      return null;
+      return const LocationFetchResult.failed(LocationFailure.fetchFailed);
     }
   }
 }
