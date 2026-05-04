@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/mood_provider.dart';
@@ -13,34 +14,21 @@ import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await NotificationService.initialize();
-  await SupabaseService.initialize();
-
   final dbService = DatabaseService();
   final syncService = SyncService(dbService);
-
-  final lockEnabled = await AppLockService.isEnabled();
-
-  runApp(MoodLoomApp(
-    dbService: dbService,
-    syncService: syncService,
-    lockEnabled: lockEnabled,
-  ));
+  runApp(MoodLoomApp(dbService: dbService, syncService: syncService));
 }
 
 class MoodLoomApp extends StatelessWidget {
   final DatabaseService dbService;
   final SyncService syncService;
-  final bool lockEnabled;
 
   const MoodLoomApp({
     super.key,
     required this.dbService,
     required this.syncService,
-    required this.lockEnabled,
   });
 
   @override
@@ -66,10 +54,7 @@ class MoodLoomApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-            home: _AppEntry(
-              lockEnabled: lockEnabled,
-              syncService: syncService,
-            ),
+            home: _AppEntry(syncService: syncService),
           );
         },
       ),
@@ -78,29 +63,66 @@ class MoodLoomApp extends StatelessWidget {
 }
 
 class _AppEntry extends StatefulWidget {
-  final bool lockEnabled;
   final SyncService syncService;
-  const _AppEntry({required this.lockEnabled, required this.syncService});
+  const _AppEntry({required this.syncService});
 
   @override
   State<_AppEntry> createState() => _AppEntryState();
 }
 
 class _AppEntryState extends State<_AppEntry> {
-  bool _pinUnlocked = false;
+  bool _pinUnlocked = true;
+  bool _lockResolved = false;
 
   @override
   void initState() {
     super.initState();
-    _pinUnlocked = !widget.lockEnabled;
-    // Initialize sync after providers are built so MoodProvider catches the
-    // initialSession event and refreshes when a stored session signs in.
-    widget.syncService.initialize();
+    _bootstrap();
+  }
+
+  void _bootstrap() {
+    // All of these are intentionally fire-and-forget so the first frame can
+    // draw immediately. The UI gates below show a spinner until the lock
+    // check resolves; everything else runs invisibly in the background.
+
+    NotificationService.initialize().catchError((e) {
+      if (kDebugMode) debugPrint('NotificationService init failed: $e');
+    });
+
+    // SyncService.initialize subscribes to Supabase auth events, so it must
+    // run only after the Supabase client exists. Chain with .then().
+    SupabaseService.initialize().then((_) {
+      widget.syncService.initialize();
+    }).catchError((e) {
+      if (kDebugMode) debugPrint('Supabase/Sync init failed: $e');
+    });
+
+    AppLockService.isEnabled().then((enabled) {
+      if (!mounted) return;
+      setState(() {
+        _pinUnlocked = !enabled;
+        _lockResolved = true;
+      });
+    }).catchError((e) {
+      if (kDebugMode) debugPrint('AppLock check failed: $e');
+      if (mounted) setState(() => _lockResolved = true);
+    });
+  }
+
+  Widget _loadingScaffold() {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(color: AppTheme.primaryTeal),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+
+    // Step 0: Wait for the lock check before deciding PIN vs. straight-in.
+    if (!_lockResolved) return _loadingScaffold();
 
     // Step 1: PIN lock
     if (!_pinUnlocked) {
@@ -110,11 +132,7 @@ class _AppEntryState extends State<_AppEntry> {
     }
 
     // Step 2: Wait for SharedPreferences (dark mode + onboarding flag)
-    if (!settings.settingsLoaded) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: AppTheme.primaryTeal)),
-      );
-    }
+    if (!settings.settingsLoaded) return _loadingScaffold();
 
     // Step 3: First-launch onboarding
     if (!settings.hasSeenOnboarding) {
