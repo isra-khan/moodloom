@@ -4,6 +4,13 @@
 
 MoodLoom is an offline-first Flutter mood-tracking and wellness journal. Log how you feel, write journal entries, and watch patterns emerge through rich insights — with optional cloud sync via Supabase. It goes well beyond a simple tracker, adding AI-assisted sentiment analysis, face-based mood detection, dream journaling, breathing exercises, mood prediction, time capsules, achievements, and an app lock for privacy.
 
+
+
+
+
+https://github.com/user-attachments/assets/6ed23629-0ba0-405a-baa9-4301ba07151f
+
+
 ## ✨ Features
 
 - **Mood Logging** — quick 1–5 mood entries with emoji, optional notes, journal text, tags, and location.
@@ -125,12 +132,6 @@ stays fully functional offline, and guests can use it without an account.
 ## 📦 Supported Platforms
 
 Android · iOS · 
-
-
-
-
-
-https://github.com/user-attachments/assets/6ed23629-0ba0-405a-baa9-4301ba07151f
 
 
 
