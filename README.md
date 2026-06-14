@@ -128,6 +128,9 @@ Android · iOS ·
 
 
 
-https://github.com/user-attachments/assets/828af725-c198-4894-8e98-d8ce8d6d9dfe
+
+
+https://github.com/user-attachments/assets/6ed23629-0ba0-405a-baa9-4301ba07151f
+
 
 
